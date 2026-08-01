@@ -89,7 +89,18 @@ export default function Sidebar({
               <button
                 type="button"
                 className={styles.navItem}
-                aria-current={user.user_id === currentUser}
+                /* No selection in the console. One account showing as chosen
+                   says the thread is scoped to them, when it covers everybody
+                   and the next question decides. The account the server anchors
+                   a team query to is an implementation detail, not a choice the
+                   manager made, and showing it as one is how "team console"
+                   ended up looking like Jose's screen. */
+                aria-current={canReadAll(identity) ? undefined : user.user_id === currentUser}
+                title={
+                  canReadAll(identity)
+                    ? `Ask about ${user.user_name.split(" ")[0]}`
+                    : undefined
+                }
                 onClick={() => onSelectUser(user.user_id)}
               >
                 <span className={styles.avatar}>{initials(user.user_name)}</span>
