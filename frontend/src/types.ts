@@ -249,6 +249,10 @@ export type Turn =
   | { id: string; role: "user"; text: string }
   | { id: string; role: "pending"; prompt: string }
   | { id: string; role: "assistant"; result: QueryResult }
-  | { id: string; role: "error"; text: string };
+  | { id: string; role: "error"; text: string }
+  /** The console asking which client it should read, when the question named
+   *  nobody and cannot be answered for everybody. Not an error: the manager
+   *  asked something reasonable that is simply ambiguous here. */
+  | { id: string; role: "clarify"; text: string; options: string[] };
 
 export type Theme = "light" | "dark";

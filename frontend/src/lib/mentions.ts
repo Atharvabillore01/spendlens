@@ -27,3 +27,21 @@ export function mentionedUser(prompt: string, users: User[]): User | null {
   }
   return null;
 }
+
+/* First person, in a screen where the reader owns no transactions.
+ *
+ * "Show me my top merchants" in the console has no subject: the manager has no
+ * spending, and the thread covers three clients. Sent anyway it is answered
+ * about whichever account was the anchor and narrated as though it covered
+ * everyone -- "Jose BazBaz's top merchants across the team", which is both
+ * wrong and confidently phrased. Better to ask who is meant.
+ *
+ * Team questions ("who spent the most?", "compare the team") are not
+ * first-person and are unaffected.
+ */
+const FIRST_PERSON = /\b(my|me|mine|i'm|i am|am i|did i|do i|my own)\b/i;
+
+export function needsASubject(prompt: string, users: User[]): boolean {
+  if (mentionedUser(prompt, users)) return false;
+  return FIRST_PERSON.test(prompt);
+}

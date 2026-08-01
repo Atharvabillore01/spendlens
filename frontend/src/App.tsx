@@ -11,7 +11,7 @@ import Transcript from "./components/Transcript";
 import UploadPage from "./components/UploadPage";
 import { useDevMode, useTheme } from "./hooks/usePreferences";
 import { useTranscripts } from "./hooks/useTranscripts";
-import { handleFor, mentionedUser } from "./lib/mentions";
+import { handleFor, mentionedUser, needsASubject } from "./lib/mentions";
 import { uid } from "./lib/format";
 import { useRoute } from "./lib/routing";
 import styles from "./App.module.css";
@@ -234,6 +234,23 @@ export default function App() {
       let outgoing = prompt;
       if (readAll) {
         const mentioned = mentionedUser(prompt, users);
+
+        /* A first-person question naming nobody has no answer here. Rather than
+           picking a client and presenting it as the team, ask. */
+        if (!mentioned && needsASubject(prompt, users)) {
+          append(
+            key,
+            { id: uid(), role: "user", text: prompt },
+            {
+              id: uid(),
+              role: "clarify",
+              text: "Which client did you mean? This thread covers every account, so a question about \u201cmy\u201d spending needs a name.",
+              options: users.map((u) => `@${handleFor(u.user_name)} ${prompt}`),
+            },
+          );
+          return;
+        }
+
         userId = mentioned?.user_id ?? users[0]?.user_id ?? currentUser;
         if (!mentioned) outgoing = `Across all accounts on the team: ${prompt}`;
       }

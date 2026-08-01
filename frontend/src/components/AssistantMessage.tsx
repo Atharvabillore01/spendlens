@@ -12,9 +12,10 @@ interface Props {
   result: QueryResult;
   isLast: boolean;
   onAsk: (prompt: string) => void;
+  console?: boolean;
 }
 
-export default function AssistantMessage({ result, isLast, onAsk }: Props) {
+export default function AssistantMessage({ result, isLast, onAsk, console: isConsole }: Props) {
   const flags = result.guardrail_flags ?? [];
   const blocked = flags.some((flag) => FLAGS[flag]?.danger);
   const variant = blocked ? shared.blocked : result.degraded ? styles.degraded : "";
@@ -55,7 +56,7 @@ export default function AssistantMessage({ result, isLast, onAsk }: Props) {
           <MetaStrip result={result} />
         </div>
 
-        {isLast && <FollowUps result={result} onAsk={onAsk} />}
+        {isLast && <FollowUps result={result} onAsk={onAsk} console={isConsole} />}
       </div>
     </div>
   );
@@ -81,8 +82,16 @@ function Prose({ text }: { text: string }) {
   );
 }
 
-function FollowUps({ result, onAsk }: { result: QueryResult; onAsk: (prompt: string) => void }) {
-  const items = followUps(result);
+function FollowUps({
+  result,
+  onAsk,
+  console: isConsole,
+}: {
+  result: QueryResult;
+  onAsk: (prompt: string) => void;
+  console?: boolean;
+}) {
+  const items = followUps(result, { console: isConsole });
   if (!items.length) return null;
   return (
     <div className={styles.followups}>

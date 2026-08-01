@@ -48,6 +48,28 @@ export default function Transcript({ turns, user, busy, onAsk, console: isConsol
               );
             case "pending":
               return <PendingMessage key={turn.id} />;
+            case "clarify":
+              return (
+                <div key={turn.id} className={`${styles.msg} ${styles.assistant}`}>
+                  <span className={styles.avatar}>◗</span>
+                  <div className={styles.bubble}>
+                    <p>{turn.text}</p>
+                    <div className={styles.clarifyRow}>
+                      {turn.options.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={styles.clarifyBtn}
+                          onClick={() => onAsk(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+
             case "error":
               return (
                 <div key={turn.id} className={`${styles.msg} ${styles.assistant} ${styles.blocked}`}>
@@ -61,7 +83,7 @@ export default function Transcript({ turns, user, busy, onAsk, console: isConsol
               );
             case "assistant":
               return (
-                <AssistantMessage
+                <AssistantMessage console={isConsole}
                   key={turn.id}
                   result={turn.result}
                   isLast={isLast}

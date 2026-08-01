@@ -100,3 +100,27 @@
     max-width: 88%;
   }
 }
+
+/* Clarification chips. Deliberately not styled as an error: the question was
+   reasonable, it just has no single subject on this screen. */
+.clarifyRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.clarifyBtn {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--line, #e6e6e2);
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.clarifyBtn:hover {
+  border-color: var(--accent, #4f46e5);
+}
