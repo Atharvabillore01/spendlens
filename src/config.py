@@ -146,6 +146,13 @@ class Settings(BaseSettings):
     # production path: transactions live in Postgres and are queried per user
     # per window, so process memory no longer scales with the dataset.
     storage_backend: Literal["dataframe", "sql"] = "dataframe"
+    # Create missing tables during startup. Convenient for a container that
+    # starts once and for tests that start against an empty database; wrong for
+    # serverless, where "startup" happens on every cold invocation and this
+    # spends seconds of DDL and reflection round trips to confirm a schema that
+    # has not changed since the last deploy. Set false once the schema exists
+    # and create it deliberately with `manage_accounts.py`.
+    db_auto_create: bool = True
     # postgresql+psycopg://user:pass@host/db in production; sqlite:///... works
     # for local runs and is what the tests use.
     database_url: str = "sqlite:///" + str(PROJECT_ROOT / "data" / "ledger.db")

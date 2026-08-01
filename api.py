@@ -106,7 +106,8 @@ pipeline: Optional[TransactionRAGPipeline] = None
 
 if settings.storage_backend == "sql":
     _engine = get_engine(settings)
-    create_all(_engine)
+    if settings.db_auto_create:
+        create_all(_engine)
     _tenants = TenantPipelineCache(settings=settings, llm_client=_client, engine=_engine)
 else:
     pipeline = TransactionRAGPipeline(
@@ -117,7 +118,8 @@ else:
 # so the auth store is created regardless of which storage backend is serving
 # transactions -- otherwise login would only work in `sql` mode.
 auth_engine = _engine or get_engine(settings)
-create_all(auth_engine)
+if settings.db_auto_create:
+    create_all(auth_engine)
 
 # Rate limiting shares the pipeline's cache backend, so switching CACHE_BACKEND
 # to redis makes the limit correct across workers with no change here. Two
