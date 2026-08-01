@@ -70,9 +70,13 @@ export default function Login({ portal, onSignedIn, onNavigate, expired }: Props
     api.hints().then(setHints).catch(() => setHints(null));
   }, []);
 
-  // Each door offers the accounts that can actually get through it.
+  // The personal door offers every published account, so all the demo logins
+  // are one click apart instead of one click plus a portal switch nobody
+  // notices. The team door still offers only accounts that can get through it:
+  // it applies a role check after signing in, and filling it with a credential
+  // that is about to be refused would be a trap, not a shortcut.
   const offered = (hints?.accounts ?? []).filter((a) =>
-    portal === "manager" ? MANAGER_ROLES.has(a.role) : a.role === "user",
+    portal === "manager" ? MANAGER_ROLES.has(a.role) : true,
   );
 
   async function submit(event: FormEvent) {
