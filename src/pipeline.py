@@ -162,6 +162,8 @@ class TransactionRAGPipeline:
         prompt: str,
         chart_theme: str = "light",
         can_read_all: bool = False,
+        actor_id: Optional[str] = None,
+        impersonated: bool = False,
     ) -> dict[str, Any]:
         """Run one turn.
 
@@ -181,7 +183,7 @@ class TransactionRAGPipeline:
 
         # -- Stage 1a: user validation (before guardrails need the name) ------
         if not self.store.validate_user(user_id):
-            return self._user_not_found(user_id, prompt, started)
+            return self._user_not_found(user_id, prompt, started, actor_id=actor_id, impersonated=impersonated)
 
         user_name = self.store.user_name(user_id)
 
@@ -219,6 +221,8 @@ class TransactionRAGPipeline:
                 started=started,
                 model_used=None,
                 record_history=False,
+                actor_id=actor_id,
+                impersonated=impersonated,
             )
 
         safe_prompt = guard.prompt
@@ -244,6 +248,8 @@ class TransactionRAGPipeline:
                 flags=flags + [FLAG_NO_DATA],
                 started=started,
                 model_used=None,
+                actor_id=actor_id,
+                impersonated=impersonated,
             )
 
         # -- Stage 2: context assembly ---------------------------------------
@@ -331,6 +337,8 @@ class TransactionRAGPipeline:
             viz_state=ToolDispatcher.viz_state(stage3["outcome"]) if stage3["outcome"] else None,
             degraded=stage3["degraded"],
             tool_names=[r.tool for r in results],
+            actor_id=actor_id,
+            impersonated=impersonated,
         )
 
     # ==== cache admin ========================================================
@@ -667,6 +675,10 @@ class TransactionRAGPipeline:
         tool_names: Optional[list[str]] = None,
         degraded: bool = False,
         error: Optional[dict] = None,
+        # Carried from run() purely so the audit entry can name who asked, as
+        # distinct from whose data was read.
+        actor_id: Optional[str] = None,
+        impersonated: bool = False,
     ) -> dict[str, Any]:
         unique_flags = sorted(set(flags))
 
@@ -711,6 +723,9 @@ class TransactionRAGPipeline:
             model_used=model_used,
             tool_calls=list(tool_names or []),
             error=(error or {}).get("error"),
+            actor_id=actor_id,
+            tenant_id=self.tenant_id,
+            impersonated=impersonated,
         )
         return result
 
@@ -724,7 +739,14 @@ class TransactionRAGPipeline:
                 return f"{key}: {money(data_summary[key])}"
         return (response or "")[:160]
 
-    def _user_not_found(self, user_id: str, prompt: str, started: float) -> dict[str, Any]:
+    def _user_not_found(
+        self,
+        user_id: str,
+        prompt: str,
+        started: float,
+        actor_id: Optional[str] = None,
+        impersonated: bool = False,
+    ) -> dict[str, Any]:
         """Structured error, never an exception trace (spec §6)."""
         return self._finalize(
             user_id=user_id,
@@ -742,6 +764,8 @@ class TransactionRAGPipeline:
             model_used=None,
             record_history=False,
             error={"error": "user_not_found", "message": f"user_id '{user_id}' does not exist in the dataset"},
+            actor_id=actor_id,
+            impersonated=impersonated,
         )
 
 

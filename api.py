@@ -62,6 +62,7 @@ from src.ingest.loader import IngestError, delete_batch, ingest_frame, read_tabl
 from src.ingest.paste import parse_paste  # noqa: E402
 from src import inbox  # noqa: E402
 from src.cache.kv_cache import build_cache  # noqa: E402
+from src.observability.audit_logger import AuditLogger  # noqa: E402
 from src.observability.circuit_breaker import BreakerState  # noqa: E402
 from src.observability.metrics import metrics  # noqa: E402
 from src.observability.rate_limit import RateLimiter  # noqa: E402
@@ -71,6 +72,11 @@ from src.tenancy import TenantPipelineCache  # noqa: E402
 log = logging.getLogger("transaction_rag.api")
 
 settings = get_settings()
+
+# Events that belong to the service rather than to one turn -- sign-ins,
+# uploads, deletions, privileged reads. Same sink and format as the pipeline's
+# own logger, so an auditor reads one stream rather than correlating two.
+audit = AuditLogger(settings.audit_log_path)
 app = FastAPI(
     title="Transaction RAG Pipeline",
     description=(
@@ -162,6 +168,17 @@ def enforce_limit(limiter: RateLimiter, subject: str, response: Response) -> Non
             },
             headers=decision.headers,
         )
+
+
+def _hash_name(name: str) -> str:
+    """A stable handle for a filename without recording the filename.
+
+    Upload names routinely carry a client or person's name, which is exactly the
+    kind of content this log is forbidden from holding.
+    """
+    import hashlib  # noqa: PLC0415
+
+    return hashlib.sha256((name or "").encode("utf-8")).hexdigest()[:12]
 
 
 def pipeline_for(principal: Principal) -> TransactionRAGPipeline:
@@ -289,10 +306,26 @@ def login(request: LoginRequest) -> dict[str, Any]:
         account = authenticate(auth_engine, tenant_id, request.email, request.password)
         token = issue_for(settings, account)
     except AuthError as exc:
+        # Failed sign-ins are the first thing anyone investigating an intrusion
+        # asks for, and they were not being recorded anywhere. The email is
+        # deliberately absent: it is the one field in this request that is
+        # personal data, and the reason for failure is not disclosed here for
+        # the same reason the response does not disclose it.
+        audit.event(
+            "login_failed",
+            tenant_id=tenant_id,
+            reason=exc.code,
+        )
         raise HTTPException(
             status_code=exc.status_code, detail={"error": exc.code, "message": exc.message}
         ) from exc
 
+    audit.event(
+        "login",
+        tenant_id=tenant_id,
+        actor_id=account.user_id,
+        role=account.role,
+    )
     log.info("login tenant=%s user=%s role=%s", tenant_id, account.user_id, account.role)
     return {
         "access_token": token,
@@ -445,6 +478,15 @@ def query(
         # Support access to somebody else's financial data is exactly the event
         # an audit needs to show; logging it here means it is recorded even if
         # the turn itself fails.
+        # This is the event the whole scope model exists to control, and it
+        # was only ever reaching the application log -- a different stream,
+        # different retention, and absent from the audit file entirely.
+        audit.event(
+            "privileged_read",
+            tenant_id=principal.tenant_id,
+            actor_id=principal.user_id,
+            user_id=user_id,
+        )
         log.warning(
             "impersonation tenant=%s actor=%s target=%s",
             principal.tenant_id, principal.user_id, user_id,
@@ -457,6 +499,8 @@ def query(
         # A manager/analyst token may ask population questions ("who spends the
         # most?"). An ordinary caller asking the same words is refused.
         can_read_all=principal.has(SCOPE_READ_ANY),
+        actor_id=principal.user_id,
+        impersonated=impersonated,
     )
     # Return chart URLs rather than filesystem paths so the response is usable
     # by a client that isn't on this machine.
@@ -557,6 +601,18 @@ async def ingest(
     if _tenants is not None:
         _tenants.invalidate(target_tenant)
 
+    # Loading somebody's transaction history is a data-mutating, privileged act.
+    # The row counts are the shape of what changed; the file's contents are not
+    # recorded, for the same reason prompts are hashed rather than stored.
+    audit.event(
+        "ingest",
+        tenant_id=target_tenant,
+        actor_id=principal.user_id,
+        batch_id=getattr(report, "batch_id", None),
+        rows_inserted=getattr(report, "inserted", None),
+        rows_rejected=getattr(report, "rejected", None),
+        filename_hash=_hash_name(file.filename or staged.name),
+    )
     return report.as_dict()
 
 
@@ -574,6 +630,14 @@ def revert_ingest(
     removed = delete_batch(_engine, principal.tenant_id, batch_id)
     if _tenants is not None:
         _tenants.invalidate(principal.tenant_id)
+    # Destroying data is the event most worth being able to prove afterwards.
+    audit.event(
+        "ingest_reverted",
+        tenant_id=principal.tenant_id,
+        actor_id=principal.user_id,
+        batch_id=batch_id,
+        rows_removed=removed,
+    )
     return {"batch_id": batch_id, "rows_removed": removed}
 
 
