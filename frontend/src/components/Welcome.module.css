@@ -102,3 +102,51 @@
     transform: none;
   }
 }
+
+/* Client-by-client row. Separate from the starters on purpose: those are
+   questions, these are subjects, and conflating them is what made the console
+   read like one person's screen. */
+.clients {
+  margin-top: 1.75rem;
+  width: 100%;
+}
+
+.clientsLabel {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-secondary, #52514e);
+}
+
+.clientRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.client {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--line, #e6e6e2);
+  border-radius: 0.7rem;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.client:hover {
+  border-color: var(--accent, #4f46e5);
+  transform: translateY(-1px);
+}
+
+.client small {
+  color: var(--ink-secondary, #52514e);
+  font-size: 0.78rem;
+}

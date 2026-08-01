@@ -7,13 +7,15 @@ import type { Turn, User } from "../types";
 
 interface Props {
   console?: boolean;
+  users?: User[];
+  onMention?: (userName: string) => void;
   turns: Turn[];
   user: User | null;
   busy: boolean;
   onAsk: (prompt: string) => void;
 }
 
-export default function Transcript({ turns, user, busy, onAsk, console: isConsole }: Props) {
+export default function Transcript({ turns, user, busy, onAsk, console: isConsole, users, onMention }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
 
   // Follow the tail as turns land. `scrollTo` respects the CSS smooth
@@ -33,7 +35,7 @@ export default function Transcript({ turns, user, busy, onAsk, console: isConsol
       aria-busy={busy}
     >
       {turns.length === 0 ? (
-        <Welcome user={user} onAsk={onAsk} console={isConsole} />
+        <Welcome user={user} onAsk={onAsk} console={isConsole} users={users} onMention={onMention} />
       ) : (
         turns.map((turn, index) => {
           const isLast = index === turns.length - 1;

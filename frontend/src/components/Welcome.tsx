@@ -11,13 +11,24 @@ interface Props {
   /** Console mode reframes the empty state around the team, and offers
    *  team-shaped openers instead of first-person ones. */
   console?: boolean;
+  /** The roster, for team totals and the client-by-client row. */
+  users?: User[];
+  /** Starts a mention for one client rather than asking immediately: naming
+   *  someone is the beginning of a question, not the whole of it. */
+  onMention?: (userName: string) => void;
   user: User | null;
   onAsk: (prompt: string) => void;
 }
 
+interface Starter {
+  icon: string;
+  title: string;
+  hint: string;
+}
+
 /* Starters describe what the user gets, not which tool fires. Each one maps to
    a different capability, so the first click is never a dead end. */
-const STARTERS = [
+const STARTERS: Starter[] = [
   {
     icon: "◒",
     title: "What did I spend the most on last month?",
@@ -40,8 +51,37 @@ const STARTERS = [
   },
 ];
 
-export default function Welcome({ user, onAsk, console: isConsole }: Props) {
+/* A console asks different questions. "Am I saving money?" is meaningless when
+   the thread covers every account, and offering it invites an answer about
+   whichever account happened to be the anchor. These are questions the
+   cross-account tools can actually answer. */
+const TEAM_STARTERS: Starter[] = [
+  {
+    icon: "◍",
+    title: "Compare spending across the team",
+    hint: "Every account, side by side",
+  },
+  {
+    icon: "◑",
+    title: "Who spent the most last month?",
+    hint: "Ranked, with the gap between them",
+  },
+  {
+    icon: "◈",
+    title: "How does the team's spending split by category?",
+    hint: "Where the money goes across all accounts",
+  },
+  {
+    icon: "◇",
+    title: "Has team spending gone up or down?",
+    hint: "The trend across the whole book",
+  },
+];
+
+export default function Welcome({ user, users = [], onAsk, console: isConsole, onMention }: Props) {
   const firstName = user?.user_name.split(" ")[0];
+  const starters = isConsole ? TEAM_STARTERS : STARTERS;
+  const teamTransactions = users.reduce((sum, u) => sum + (u.transaction_count || 0), 0);
 
   return (
     <div className={styles.welcome}>
@@ -62,10 +102,10 @@ export default function Welcome({ user, onAsk, console: isConsole }: Props) {
           : "Every figure comes straight from your transactions and is checked before it reaches you — the assistant explains the numbers, it never invents them."}
       </p>
 
-      {user && (
+      {(user || isConsole) && (
         <>
           <div className={styles.grid}>
-            {STARTERS.map((starter, index) => (
+            {starters.map((starter, index) => (
               <button
                 key={starter.title}
                 type="button"
@@ -84,8 +124,32 @@ export default function Welcome({ user, onAsk, console: isConsole }: Props) {
             ))}
           </div>
 
+          {/* Client by client. The console's other half: one click names an
+              account, so a question about one person is never buried in a
+              team-wide answer. */}
+          {isConsole && users.length > 0 && (
+            <div className={styles.clients}>
+              <p className={styles.clientsLabel}>Or ask about one client</p>
+              <div className={styles.clientRow}>
+                {users.map((client) => (
+                  <button
+                    key={client.user_id}
+                    type="button"
+                    className={styles.client}
+                    onClick={() => onMention?.(client.user_name)}
+                  >
+                    <b>{client.user_name}</b>
+                    <small>{client.transaction_count.toLocaleString()} transactions</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p className={styles.foot}>
-            {user.transaction_count.toLocaleString()} transactions on file
+            {isConsole
+              ? `${users.length} account${users.length === 1 ? "" : "s"} · ${teamTransactions.toLocaleString()} transactions on file`
+              : `${(user?.transaction_count ?? 0).toLocaleString()} transactions on file`}
           </p>
         </>
       )}

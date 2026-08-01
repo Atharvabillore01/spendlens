@@ -32,6 +32,15 @@ const QUICK = [
   "Where is my money going?",
 ];
 
+/* The console's thread covers every account, so a first-person chip would ask
+   a question nobody in this screen is the subject of. */
+const QUICK_TEAM = [
+  "Compare spending across the team",
+  "Who spent the most last month?",
+  "How does the team split by category?",
+  "Has team spending gone up or down?",
+];
+
 /* Probes for the guardrail layers. Never shown to an ordinary user — these are
    here to demonstrate that injection, cross-user access and off-topic prompts
    are refused, which is a developer concern, not a product feature. */
@@ -111,7 +120,7 @@ export default function Composer({
       {hasThread && (
         <div className={styles.chips}>
           <div className={styles.chipRow}>
-            {QUICK.map((text) => (
+            {(mentionables?.length ? QUICK_TEAM : QUICK).map((text) => (
               <button
                 key={text}
                 type="button"

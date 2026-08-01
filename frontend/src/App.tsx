@@ -225,9 +225,17 @@ export default function App() {
          ordinary user has neither affordance: their subject is themselves and
          the server would refuse anything else. */
       let userId = currentUser;
+      /* What actually goes to the model. A team question still has to be
+         anchored to an account -- the cross-account tools compare *from*
+         somewhere -- so without that framing the model reads an unqualified
+         "who spent the most?" as a question about the anchor, and answers about
+         one person on a screen that says team. The framing is not shown in the
+         transcript: the question the manager asked is the one they see. */
+      let outgoing = prompt;
       if (readAll) {
         const mentioned = mentionedUser(prompt, users);
         userId = mentioned?.user_id ?? users[0]?.user_id ?? currentUser;
+        if (!mentioned) outgoing = `Across all accounts on the team: ${prompt}`;
       }
       if (!userId) return;
 
@@ -241,7 +249,7 @@ export default function App() {
       );
 
       try {
-        const result = await api.query({ user_id: userId, prompt, theme }, controller.signal);
+        const result = await api.query({ user_id: userId, prompt: outgoing, theme }, controller.signal);
         resolvePending(key, { id: uid(), role: "assistant", result });
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -429,6 +437,11 @@ export default function App() {
               busy={busy}
               onAsk={ask}
               console={readAll}
+              users={users}
+              onMention={(userName) => {
+                setMentionSeed({ text: `@${handleFor(userName)}`, nonce: Date.now() });
+                composerRef.current?.focus();
+              }}
             />
             <Composer
               ref={composerRef}
