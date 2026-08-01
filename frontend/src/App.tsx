@@ -11,6 +11,7 @@ import Transcript from "./components/Transcript";
 import UploadPage from "./components/UploadPage";
 import { useDevMode, useTheme } from "./hooks/usePreferences";
 import { useTranscripts } from "./hooks/useTranscripts";
+import { mentionedUser } from "./lib/mentions";
 import { uid } from "./lib/format";
 import { useRoute } from "./lib/routing";
 import styles from "./App.module.css";
@@ -43,12 +44,23 @@ export default function App() {
   // questions doesn't announce them as if they just arrived.
   const seenCount = useRef<number | null>(null);
 
-  const { turnsFor, append, resolvePending, dropPending, clear } = useTranscripts();
+  const { turnsFor, append, resolvePending, dropPending, clear, clearAll } = useTranscripts();
   const inFlight = useRef<AbortController | null>(null);
   const composerRef = useRef<HTMLInputElement>(null);
 
   const readAll = canReadAll(identity);
-  const turns = currentUser ? turnsFor(currentUser) : [];
+  /* Threads are keyed by reader *and* subject. Keyed by subject alone, a
+     manager's conversation about an account holder landed under that holder's
+     key, and the holder saw it on their next sign-in. */
+  const threadKey = useCallback(
+    (subject: string) => `${identity?.user_id || "anon"}:${subject}`,
+    [identity],
+  );
+  /* A manager reads every account, so their conversation is one console
+     thread, not a thread per account holder. Ordinary users keep a thread of
+     their own -- there is only ever one subject. */
+  const conversationKey = readAll ? threadKey("console") : currentUser ? threadKey(currentUser) : null;
+  const turns = conversationKey ? turnsFor(conversationKey) : [];
   const activeUser = useMemo(
     () => users.find((u) => u.user_id === currentUser) ?? null,
     [users, currentUser],
@@ -94,6 +106,7 @@ export default function App() {
     // Send them back to the door they came through, so a manager signing out
     // does not land on the personal form and wonder where the console went.
     const back = canReadAll(identity) ? "/manager/login" : "/login";
+    clearAll();
     writeToken(null);
     setIdentity(null);
     setExpired(false);
@@ -101,7 +114,7 @@ export default function App() {
     setUsers([]);
     setCurrentUser(null);
     navigate(back);
-  }, [identity, navigate]);
+  }, [identity, navigate, clearAll]);
 
   /* ── data ──────────────────────────────────────────────────────── */
 
@@ -202,26 +215,39 @@ export default function App() {
 
   const ask = useCallback(
     async (prompt: string) => {
-      const userId = currentUser;
-      if (!userId || busy) return;
+      const key = conversationKey;
+      if (!key || busy) return;
+
+      /* In the console, who the question is about comes from the text.
+         `@sarah what did she spend` reads one account; the same question with
+         no mention is a question about everyone, and is sent anchored to the
+         roster so the cross-account tools have a frame of reference. An
+         ordinary user has neither affordance: their subject is themselves and
+         the server would refuse anything else. */
+      let userId = currentUser;
+      if (readAll) {
+        const mentioned = mentionedUser(prompt, users);
+        userId = mentioned?.user_id ?? users[0]?.user_id ?? currentUser;
+      }
+      if (!userId) return;
 
       const controller = new AbortController();
       inFlight.current = controller;
       setBusy(true);
       append(
-        userId,
+        key,
         { id: uid(), role: "user", text: prompt },
         { id: uid(), role: "pending", prompt },
       );
 
       try {
         const result = await api.query({ user_id: userId, prompt, theme }, controller.signal);
-        resolvePending(userId, { id: uid(), role: "assistant", result });
+        resolvePending(key, { id: uid(), role: "assistant", result });
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
-          dropPending(userId);
+          dropPending(key);
         } else {
-          resolvePending(userId, {
+          resolvePending(key, {
             id: uid(),
             role: "error",
             text: `That request didn't go through — ${(error as Error).message}`,
@@ -234,7 +260,7 @@ export default function App() {
         void refreshHealth();
       }
     },
-    [append, busy, currentUser, dropPending, refreshHealth, resolvePending, theme],
+    [append, busy, conversationKey, currentUser, dropPending, readAll, refreshHealth, resolvePending, theme, users],
   );
 
   const cancel = useCallback(() => inFlight.current?.abort(), []);
@@ -379,16 +405,17 @@ export default function App() {
               user={activeUser}
               asOf={asOf}
               turnCount={turns.filter((t) => t.role === "user").length}
-              onClear={() => currentUser && clear(currentUser)}
+              onClear={() => conversationKey && clear(conversationKey)}
             />
             <Transcript turns={turns} user={activeUser} busy={busy} onAsk={ask} />
             <Composer
               ref={composerRef}
               busy={busy}
-              disabled={!currentUser}
+              disabled={!currentUser && !readAll}
               hasThread={turns.length > 0}
               onAsk={ask}
               onCancel={cancel}
+              mentionables={readAll ? users : undefined}
             />
           </>
         )}

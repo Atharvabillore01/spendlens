@@ -151,3 +151,46 @@
     display: none;
   }
 }
+
+/* Mention menu. Sits above the input because the composer is pinned to the
+   bottom of the viewport — a menu below it would be off-screen. */
+.mentions {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line, #e6e6e2);
+  border-radius: 0.6rem;
+  background: var(--surface, #fff);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.mentions button {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mentions button:hover,
+.mentionActive {
+  background: var(--hover, #f2f2ef);
+}
+
+.mentionHandle {
+  font-weight: 600;
+}
+
+.mentionName {
+  color: var(--ink-secondary, #52514e);
+  font-size: 0.85em;
+}

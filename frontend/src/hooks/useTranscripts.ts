@@ -75,5 +75,19 @@ export function useTranscripts() {
     setStore((current) => ({ ...current, [key]: [] }));
   }, []);
 
-  return { turnsFor, append, resolvePending, dropPending, clear };
+  /* Sign-out has to take the stored threads with it. They are keyed by the
+     account the answers are *about*, not by who read them, so a manager's
+     thread about an account holder sat under that holder's key -- and the
+     holder, signing in on the same browser, was shown answers naming other
+     users and team averages that the API would never have given them. */
+  const clearAll = useCallback(() => {
+    setStore({});
+    try {
+      localStorage.removeItem(KEY);
+    } catch {
+      /* private mode -- the in-memory reset above is what matters */
+    }
+  }, []);
+
+  return { turnsFor, append, resolvePending, dropPending, clear, clearAll };
 }

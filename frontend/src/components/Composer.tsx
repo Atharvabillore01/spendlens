@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type Ref } from "react";
+import { useMemo, useState, type FormEvent, type KeyboardEvent, type Ref } from "react";
 import styles from "./Composer.module.css";
 
 interface Props {
@@ -9,6 +9,17 @@ interface Props {
   hasThread: boolean;
   onAsk: (prompt: string) => void;
   onCancel: () => void;
+  /** Account holders that can be addressed with @. Console mode only: an
+   *  ordinary user has nobody to tag, and offering the affordance would imply
+   *  a capability the API refuses. */
+  mentionables?: { user_id: string; user_name: string }[];
+}
+
+/** The handle for an account holder: their first name, which is what anyone
+ *  would actually type. Resolution is case-insensitive and falls back to the
+ *  full name, so "@sarah" and "@SarahCollins" both land. */
+export function handleFor(userName: string): string {
+  return (userName || "").trim().split(/\s+/)[0] || userName;
 }
 
 const QUICK = [
@@ -27,8 +38,54 @@ const PROBES = [
   "What's the weather tomorrow?",
 ];
 
-export default function Composer({ ref, busy, disabled, hasThread, onAsk, onCancel }: Props) {
+export default function Composer({
+  ref,
+  busy,
+  disabled,
+  hasThread,
+  onAsk,
+  onCancel,
+  mentionables,
+}: Props) {
   const [value, setValue] = useState("");
+  const [highlight, setHighlight] = useState(0);
+
+  /* The mention menu opens on a trailing @token and nowhere else: mid-sentence
+     text containing an email address must not turn the composer into a picker. */
+  const query = useMemo(() => {
+    if (!mentionables?.length) return null;
+    const match = /(?:^|\s)@([\w.]*)$/.exec(value);
+    return match ? match[1].toLowerCase() : null;
+  }, [value, mentionables]);
+
+  const matches = useMemo(() => {
+    if (query === null || !mentionables) return [];
+    return mentionables
+      .filter((u) => {
+        const handle = handleFor(u.user_name).toLowerCase();
+        return !query || handle.startsWith(query) || u.user_name.toLowerCase().replace(/\s+/g, "").startsWith(query);
+      })
+      .slice(0, 5);
+  }, [query, mentionables]);
+
+  function choose(userName: string) {
+    setValue((current) => current.replace(/@[\w.]*$/, `@${handleFor(userName)} `));
+    setHighlight(0);
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (!matches.length) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setHighlight((i) => (i + (event.key === "ArrowDown" ? 1 : matches.length - 1)) % matches.length);
+    } else if (event.key === "Enter" || event.key === "Tab") {
+      // Enter completes the mention rather than sending a half-typed name.
+      event.preventDefault();
+      choose(matches[highlight].user_name);
+    } else if (event.key === "Escape") {
+      setHighlight(0);
+    }
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -73,6 +130,30 @@ export default function Composer({ ref, busy, disabled, hasThread, onAsk, onCanc
         </div>
       )}
 
+      {matches.length > 0 && (
+        <ul className={styles.mentions} role="listbox" aria-label="Account holders">
+          {matches.map((user, index) => (
+            <li key={user.user_id}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={index === highlight}
+                className={index === highlight ? styles.mentionActive : undefined}
+                // onMouseDown, not onClick: click fires after blur, which would
+                // close the menu before the choice registered.
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  choose(user.user_name);
+                }}
+              >
+                <span className={styles.mentionHandle}>@{handleFor(user.user_name)}</span>
+                <span className={styles.mentionName}>{user.user_name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <form className={styles.composer} onSubmit={submit}>
         <input
           ref={ref}
@@ -81,7 +162,12 @@ export default function Composer({ ref, busy, disabled, hasThread, onAsk, onCanc
           value={value}
           disabled={disabled}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Ask about spending, income or savings…"
+          onKeyDown={onKeyDown}
+          placeholder={
+            mentionables?.length
+              ? "Ask about the team, or @someone for one account…"
+              : "Ask about spending, income or savings…"
+          }
           aria-label="Your question"
         />
         {busy ? (
