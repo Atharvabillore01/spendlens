@@ -1,7 +1,6 @@
 .env
 .envkey
 .venv/
-output/
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -9,10 +8,16 @@ audit.log
 node_modules/
 frontend/dist/
 .DS_Store
-.uploads/
 
+# Leading slashes are not decoration. Without one, `data/` also matches
+# `src/data/` -- eight source modules, silently excluded from every commit and
+# from the Vercel bundle, surfacing only as `No module named 'src.data'` in
+# production. Anchor anything whose name could plausibly repeat deeper in the
+# tree.
+/output/
+/.uploads/
 # SQLite lives here: account rows and, in sql mode, real transactions.
-data/
+/data/
 
 # The assessment brief is someone else's document, not this project's.
 *.docx.pdf
