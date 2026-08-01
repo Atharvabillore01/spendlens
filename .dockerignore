@@ -1,0 +1,18 @@
+# Anything that would bloat the build context or leak a secret into a layer.
+.env
+.envkey
+.venv/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.DS_Store
+output/
+data/
+audit.log
+*.log
+tests/
+*.md

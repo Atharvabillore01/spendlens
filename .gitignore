@@ -1,0 +1,18 @@
+.env
+.envkey
+.venv/
+output/
+__pycache__/
+*.pyc
+.pytest_cache/
+audit.log
+node_modules/
+frontend/dist/
+.DS_Store
+.uploads/
+
+# SQLite lives here: account rows and, in sql mode, real transactions.
+data/
+
+# The assessment brief is someone else's document, not this project's.
+*.docx.pdf

@@ -1,0 +1,63 @@
+# Local production-shaped stack: the app, Postgres for transactions, Redis for
+# the cache and rate limiter.
+#
+# Redis matters more than it looks. With CACHE_BACKEND=memory each replica keeps
+# its own cache and its own rate-limit buckets, so scaling to N replicas
+# silently multiplies every user's allowance by N and makes `cache_hit`
+# inconsistent between requests. Redis is what makes replicas > 1 correct.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ledger
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+      cache: { condition: service_healthy }
+    environment:
+      STORAGE_BACKEND: sql
+      DATABASE_URL: postgresql+psycopg://ledger:${POSTGRES_PASSWORD}@db/ledger
+      CACHE_BACKEND: redis
+      REDIS_URL: redis://cache:6379/0
+      # Required, and deliberately unset here: the compose file must not be the
+      # place a secret lives. `:?` fails the run rather than starting insecure.
+      AUTH_REQUIRED: "true"
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET to at least 32 bytes}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      LLM_PROVIDER: auto
+      # Credentials on the sign-in page are a local convenience only.
+      SHOW_LOGIN_HINTS: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Charts are the only artefact the process writes. Swap for object storage
+      # before running more than one replica — a chart rendered by replica A is
+      # not on replica B's disk.
+      - charts:/app/output
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  charts:

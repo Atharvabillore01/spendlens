@@ -1,0 +1,153 @@
+.wrap {
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  padding: 0.9rem 1.5rem 0.9rem;
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-width: var(--measure);
+  margin: 0 auto 0.75rem;
+}
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.32rem;
+}
+.chipGroupLabel {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-right: 0.35rem;
+}
+
+.chip {
+  font-size: 0.76rem;
+  cursor: pointer;
+  padding: 0.32rem 0.72rem;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  transition: all var(--fast);
+}
+.chip:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adversarial {
+  border-style: dashed;
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 38%, transparent);
+}
+.adversarial:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+.composer input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--ink);
+  padding: 0.72rem 0.95rem;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition:
+    border-color var(--fast),
+    box-shadow var(--fast);
+}
+.composer input::placeholder {
+  color: var(--ink-3);
+}
+.composer input:hover:not(:disabled) {
+  border-color: var(--ink-3);
+}
+.composer input:disabled {
+  opacity: 0.6;
+}
+
+.send,
+.stop {
+  font-weight: 550;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 0.72rem 1.35rem;
+  min-width: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-shadow: var(--shadow-sm);
+  transition:
+    filter var(--fast),
+    box-shadow var(--fast),
+    opacity var(--fast);
+}
+
+.send {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.send:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-md);
+}
+.send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stop {
+  background: var(--surface-3);
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+.stop:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.stopGlyph {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.hint {
+  max-width: var(--measure);
+  margin: 0.55rem auto 0;
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .wrap {
+    padding: 0.75rem 0.9rem;
+  }
+  .hint {
+    display: none;
+  }
+}

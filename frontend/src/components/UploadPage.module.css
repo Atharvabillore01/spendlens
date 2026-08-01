@@ -1,0 +1,339 @@
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.75rem 1.5rem 3rem;
+}
+
+.head {
+  max-width: var(--measure);
+  margin: 0 auto 1.4rem;
+}
+.head h1 {
+  font-size: 1.4rem;
+  letter-spacing: -0.028em;
+  margin-bottom: 0.4rem;
+}
+.head p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  max-width: 62ch;
+}
+
+.tabs {
+  max-width: var(--measure);
+  margin: 0 auto 1rem;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.tabs button {
+  font-size: 0.82rem;
+  padding: 0.42rem 0.9rem;
+  border: none;
+  border-radius: calc(var(--r-md) - 3px);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all var(--fast);
+}
+.tabs button:hover {
+  color: var(--ink);
+}
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel {
+  max-width: var(--measure);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.pasteLabel {
+  font-size: 0.82rem;
+  font-weight: 550;
+  color: var(--ink-2);
+}
+
+.paste {
+  width: 100%;
+  min-height: 168px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--ink);
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  resize: vertical;
+  /* Pasted spreadsheet rows are wide; wrapping them makes the shape
+     unreadable, so the field scrolls sideways instead. */
+  white-space: pre;
+  overflow-x: auto;
+}
+.paste::placeholder {
+  color: var(--ink-3);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.stat {
+  flex: 1 1 120px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.stat span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.stat b {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.statMuted b {
+  color: var(--ink-3);
+}
+
+.mapping h3 {
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+.mapGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.4rem;
+}
+.mapRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+}
+.mapRow span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.mapped {
+  color: var(--ok);
+}
+.unmapped {
+  color: var(--warn);
+}
+.mapRow select {
+  font: inherit;
+  font-size: 0.74rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 52%;
+}
+
+.previewWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+/* Wide tables scroll inside their own box; the page never scrolls sideways. */
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+.table th,
+.table td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-soft);
+}
+.table th {
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 2.6rem 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--fast);
+}
+.drop:hover,
+.dropActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.dropIcon {
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.primary,
+.secondary {
+  align-self: flex-start;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--r-md);
+  padding: 0.62rem 1.2rem;
+  transition: all var(--fast);
+}
+.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.secondary {
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+.secondary:hover {
+  border-color: var(--ink-3);
+}
+
+.error,
+.warn {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: var(--r-sm);
+}
+.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+}
+.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-left: 3px solid var(--warn);
+}
+
+.muted {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+
+.done h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.7rem;
+  color: var(--ok);
+}
+.rejections {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.schema {
+  max-width: var(--measure);
+  margin: 2.2rem auto 0;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--border);
+}
+.schema h2 {
+  font-size: 0.86rem;
+  margin-bottom: 0.4rem;
+}
+.schema p {
+  margin: 0 0 0.7rem;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+.schema ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.schema li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  padding: 0.22rem 0.6rem;
+}
+.schema code {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.req {
+  color: var(--danger);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.opt {
+  color: var(--ink-3);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

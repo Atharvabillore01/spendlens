@@ -1,0 +1,218 @@
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.75rem 1.5rem 3rem;
+}
+
+.head {
+  max-width: var(--measure);
+  margin: 0 auto 1.2rem;
+}
+.head h1 {
+  font-size: 1.4rem;
+  letter-spacing: -0.028em;
+  margin-bottom: 0.35rem;
+}
+.head p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  max-width: 62ch;
+}
+
+.composer {
+  max-width: var(--measure);
+  margin: 0 auto 1.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.85rem;
+}
+.composer textarea,
+.actions textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--ink);
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  resize: vertical;
+}
+.composerFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: var(--measure);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.9rem 1rem;
+}
+.open {
+  border-left-color: var(--warn);
+}
+.answered {
+  border-left-color: var(--ok);
+}
+.closed {
+  border-left-color: var(--ink-3);
+  opacity: 0.75;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.who {
+  font-weight: 600;
+  font-size: 0.86rem;
+  margin-right: 0.5rem;
+}
+.when {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+
+.badge {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.12rem 0.45rem;
+  border-radius: 5px;
+  flex: none;
+}
+.badge_open {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.badge_answered {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.badge_closed {
+  background: var(--surface-3);
+  color: var(--ink-3);
+}
+
+.question {
+  margin: 0 0 0.7rem;
+  font-size: 0.95rem;
+}
+
+/* What the pipeline computed, kept visually distinct from what a person wrote
+   — the audit trail depends on being able to tell them apart. */
+.computed {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 0.7rem;
+}
+.computedLabel,
+.replyLabel {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-bottom: 0.3rem;
+}
+.computed p,
+.reply p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.reply {
+  background: var(--accent-soft);
+  border-radius: var(--r-sm);
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 0.7rem;
+}
+.replyLabel {
+  color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+
+.primary,
+.secondary {
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  padding: 0.5rem 0.9rem;
+  transition: all var(--fast);
+  flex: none;
+}
+.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+}
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.secondary {
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8rem;
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+}
+
+.muted {
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+
+.empty {
+  max-width: var(--measure);
+  margin: 2rem auto;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}

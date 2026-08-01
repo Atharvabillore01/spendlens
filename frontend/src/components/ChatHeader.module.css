@@ -1,0 +1,66 @@
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.5rem;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border);
+  z-index: 5;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.who h1 {
+  font-size: 1rem;
+}
+.who p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 0.84rem;
+  font-weight: 650;
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+.brandish {
+  background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #06b6d4));
+  color: #fff;
+}
+
+.ghostBtn {
+  font-size: 0.76rem;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: all var(--fast);
+  flex: none;
+}
+.ghostBtn:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
+@media (max-width: 860px) {
+  .head {
+    padding: 0.7rem 0.9rem;
+  }
+}

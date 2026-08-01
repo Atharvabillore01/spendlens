@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-theme="auto" data-dev="off">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ledger — spending assistant</title>
+    <meta name="description" content="Ask your transaction history anything. Every figure is computed from your data and verified before you see it." />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>📊</text></svg>"
+    />
+    <script>
+      // Applied before first paint so a reload never flashes the wrong theme.
+      try {
+        const saved = localStorage.getItem("ledger.theme");
+        if (saved === "light" || saved === "dark") {
+          document.documentElement.dataset.theme = saved;
+        }
+        if (localStorage.getItem("ledger.dev") === "on") {
+          document.documentElement.dataset.dev = "on";
+        }
+      } catch {
+        /* private mode — fall back to the OS preference */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

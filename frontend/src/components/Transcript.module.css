@@ -1,0 +1,102 @@
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.75rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  scroll-behavior: smooth;
+}
+
+/* Shared message anatomy. Composed here and re-used by the assistant/pending
+   components via `composes`, so the bubble geometry has one definition. */
+.msg {
+  max-width: var(--measure);
+  width: 100%;
+  margin: 0 auto;
+  animation: rise 0.3s var(--ease) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.user {
+  display: flex;
+  justify-content: flex-end;
+}
+.userBubble {
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0.62rem 0.95rem;
+  border-radius: var(--r-lg) var(--r-lg) 4px var(--r-lg);
+  max-width: 76%;
+  box-shadow: var(--shadow-sm);
+}
+
+.assistant {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 650;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  margin-top: 0.25rem;
+}
+
+.bubbleWrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px var(--r-lg) var(--r-lg) var(--r-lg);
+  padding: 1.05rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+.bubble p {
+  margin: 0 0 0.65rem;
+}
+.bubble p:last-child {
+  margin-bottom: 0;
+}
+.bubble strong {
+  font-weight: 650;
+}
+
+.blocked .avatar {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.blocked .bubble {
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--border));
+  background: color-mix(in srgb, var(--danger-soft) 55%, var(--surface));
+}
+
+@media (max-width: 860px) {
+  .transcript {
+    padding: 1.1rem 0.9rem;
+  }
+  .userBubble {
+    max-width: 88%;
+  }
+}

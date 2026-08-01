@@ -1,0 +1,30 @@
+# Core data + charting
+pandas>=2.2
+openpyxl>=3.1
+matplotlib>=3.8
+
+# Config + validation
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+
+# LLM transport + resilience
+# (Groq and OpenRouter both speak the OpenAI wire format over httpx --
+#  no provider SDK is needed.)
+httpx>=0.27
+tenacity>=8.3
+
+# Service surface
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9   # file uploads on /ingest
+
+# Persistence (multi-tenant path; STORAGE_BACKEND=sql)
+SQLAlchemy>=2.0
+psycopg[binary]>=3.1      # Postgres driver; SQLite needs nothing extra
+
+# Auth
+PyJWT>=2.8
+
+# Tests
+pytest>=8.2

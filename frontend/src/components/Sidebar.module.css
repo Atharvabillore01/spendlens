@@ -1,0 +1,339 @@
+.sidenav {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.1rem 0.75rem 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.35rem 1.4rem;
+}
+.mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #06b6d4));
+  color: #fff;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-sm);
+}
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+.brandText strong {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+.brandText span {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+  padding: 0 0.35rem;
+}
+
+.sectionLabel {
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.navList,
+.factList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast),
+    border-color var(--fast);
+}
+.navItem:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.navItem[aria-current="true"] {
+  background: var(--accent-tint);
+  border-left-color: var(--accent);
+  color: var(--ink);
+  border-radius: 3px var(--r-md) var(--r-md) 3px;
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.who b {
+  font-weight: 550;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.who small {
+  font-size: 0.7rem;
+  color: var(--ink-3);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+
+.factList li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+.factList li b {
+  font-weight: 550;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.foot {
+  margin-top: auto;
+  padding: 0.75rem 0.35rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+.footActions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.health {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  color: var(--ink-2);
+  padding: 0.35rem 0.55rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+}
+.health span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  flex: none;
+}
+.ok {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 20%, transparent);
+}
+.bad {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent);
+}
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: all var(--fast);
+}
+.iconBtn:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+.iconBtn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+@media (max-width: 860px) {
+  .sidenav {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 0.9rem;
+    overflow-x: auto;
+  }
+  .brand {
+    padding: 0;
+  }
+  .brandText {
+    display: none;
+  }
+  .section {
+    margin: 0;
+    padding: 0;
+  }
+  .sectionLabel {
+    display: none;
+  }
+  .navList {
+    flex-direction: row;
+  }
+  .navItem {
+    min-height: 34px;
+    border-left: none;
+    border-radius: var(--r-md);
+  }
+  .navItem[aria-current="true"] {
+    border-radius: var(--r-md);
+  }
+  .who small {
+    display: none;
+  }
+  .factList {
+    display: none;
+  }
+  .foot {
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: none;
+  }
+  .health {
+    display: none;
+  }
+}
+
+.navIcon {
+  width: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+}
+.navItem[aria-current="true"] .navIcon {
+  color: var(--accent);
+}
+
+.badge {
+  margin-left: auto;
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.66rem;
+  font-weight: 650;
+  display: grid;
+  place-items: center;
+}
+
+.account {
+  margin-top: auto;
+  padding: 0.6rem 0.6rem 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+.accountEmail {
+  flex: 1 1 100%;
+  font-size: 0.74rem;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.role {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 650;
+}
+.signOut {
+  margin-left: auto;
+  font-size: 0.72rem;
+  background: none;
+  border: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  transition: color var(--fast);
+}
+.signOut:hover {
+  color: var(--danger);
+}

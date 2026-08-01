@@ -1,0 +1,153 @@
+.inspector {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.2rem 1.1rem 2rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sectionLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.ghostBtn {
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  padding: 0.32rem 0.55rem;
+  cursor: pointer;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: all var(--fast);
+}
+.ghostBtn:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
+.note {
+  font-size: 0.73rem;
+  color: var(--ink-3);
+  margin: 0.5rem 0 0.85rem;
+  line-height: 1.5;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.entry {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+  transition: border-color var(--fast);
+}
+.filled {
+  border-color: color-mix(in srgb, var(--ok) 30%, var(--border));
+}
+
+.entryKey {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--fast);
+}
+.entryKey:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.state {
+  font-size: 0.61rem;
+  padding: 0.08rem 0.38rem;
+  border-radius: 4px;
+  flex: none;
+  letter-spacing: 0.04em;
+}
+.set {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.unset {
+  background: var(--surface-3);
+  color: var(--ink-3);
+}
+
+.entryBody {
+  padding: 0.55rem 0.6rem;
+  font-size: 0.73rem;
+  border-top: 1px solid var(--border);
+}
+
+.definitions {
+  margin: 0;
+}
+.defRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+.defRow dt {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+}
+.defRow dd {
+  margin: 0;
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.history {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ink-2);
+}
+.history li {
+  margin-bottom: 0.35rem;
+}
+.history li:last-child {
+  margin-bottom: 0;
+}
+
+.empty {
+  font-size: 0.73rem;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+@media (max-width: 1280px) {
+  .inspector {
+    display: none;
+  }
+}

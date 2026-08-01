@@ -1,0 +1,142 @@
+/* Design tokens.
+
+   Theming contract: `prefers-color-scheme` supplies the OS default; the explicit
+   [data-theme] stamp from the toggle must win in *both* directions, hence the
+   :not([data-theme="light"]) guard on the media block.
+
+   --surface in dark is the same hex the server renders charts onto, so a chart
+   sits flush on its card instead of floating in a white rectangle. */
+
+:root {
+  color-scheme: light;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+  --surface-3: #eceef2;
+  --border: #e4e7ec;
+  --border-soft: rgba(16, 24, 40, 0.06);
+
+  --ink: #101828;
+  --ink-2: #475467;
+  --ink-3: #8b95a5;
+
+  /* Chrome accent — deliberately unlike every series hue, so UI furniture can
+     never be misread as data. */
+  --accent: #4f46e5;
+  --accent-ink: #ffffff;
+  --accent-tint: rgba(79, 70, 229, 0.08);
+  --accent-soft: #eef2ff;
+  --accent-border: #c7d2fe;
+
+  /* Status — reserved for state, never for a series. */
+  --ok: #067647;
+  --ok-soft: #ecfdf3;
+  --warn: #b54708;
+  --warn-soft: #fffaeb;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+
+  /* Categorical series ramp. Ordered for maximum adjacent separation and
+     checked for distinguishability under deuteranopia; the accent is
+     deliberately absent so chrome never reads as data. */
+  --series-1: #2e90fa;
+  --series-2: #f79009;
+  --series-3: #12b76a;
+  --series-4: #ee46bc;
+  --series-5: #7a5af8;
+  --series-6: #06aed4;
+  --series-7: #f04438;
+  --series-8: #a0aec0;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 20px rgba(16, 24, 40, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 24, 40, 0.05), 0 20px 44px rgba(16, 24, 40, 0.12);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --fast: 200ms var(--ease);
+
+  --sidebar-w: 264px;
+  --inspector-w: 344px;
+  --measure: 840px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0a0c10;
+    --surface: #161a20;
+    --surface-2: #1b2028;
+    --surface-3: #232a33;
+    --border: #252c36;
+    --border-soft: rgba(255, 255, 255, 0.07);
+    --ink: #eaecf0;
+    --ink-2: #98a2b3;
+    --ink-3: #667085;
+    --accent: #8b8bf5;
+    --accent-ink: #0d1117;
+    --accent-tint: rgba(139, 139, 245, 0.12);
+    --accent-soft: #1c1f3d;
+    --accent-border: #35377a;
+    --ok: #47cd89;
+    --ok-soft: #0d2418;
+    --warn: #f79009;
+    --warn-soft: #2b1f0c;
+    --danger: #f97066;
+    --danger-soft: #2d1513;
+    --series-1: #53b1fd;
+    --series-2: #fdb022;
+    --series-3: #32d583;
+    --series-4: #f670c7;
+    --series-5: #9b8afb;
+    --series-6: #22ccee;
+    --series-7: #f97066;
+    --series-8: #98a2b3;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(0, 0, 0, 0.34);
+    --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.5), 0 28px 60px rgba(0, 0, 0, 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0c10;
+  --surface: #161a20;
+  --surface-2: #1b2028;
+  --surface-3: #232a33;
+  --border: #252c36;
+  --border-soft: rgba(255, 255, 255, 0.07);
+  --ink: #eaecf0;
+  --ink-2: #98a2b3;
+  --ink-3: #667085;
+  --accent: #8b8bf5;
+  --accent-ink: #0d1117;
+  --accent-tint: rgba(139, 139, 245, 0.12);
+  --accent-soft: #1c1f3d;
+  --accent-border: #35377a;
+  --ok: #47cd89;
+  --ok-soft: #0d2418;
+  --warn: #f79009;
+  --warn-soft: #2b1f0c;
+  --danger: #f97066;
+  --danger-soft: #2d1513;
+  --series-1: #53b1fd;
+  --series-2: #fdb022;
+  --series-3: #32d583;
+  --series-4: #f670c7;
+  --series-5: #9b8afb;
+  --series-6: #22ccee;
+  --series-7: #f97066;
+  --series-8: #98a2b3;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.5), 0 28px 60px rgba(0, 0, 0, 0.45);
+}

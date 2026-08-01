@@ -1,0 +1,272 @@
+.page {
+  position: relative;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  overflow: auto;
+  background: var(--bg);
+}
+
+/* Atmosphere, not a panel: the field sits behind the card and fades out, so it
+   never competes with the form for attention. */
+.hero {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 46vh;
+  min-height: 220px;
+  opacity: 0.55;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 396px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 1.9rem 1.75rem 1.6rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.6rem;
+}
+.brand div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.brand strong {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.brand span {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+.mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #06b6d4));
+  color: #fff;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.card h1 {
+  font-size: 1.45rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.35rem;
+}
+.lede {
+  margin: 0 0 1.4rem;
+  font-size: 0.87rem;
+  color: var(--ink-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.field span {
+  font-size: 0.76rem;
+  font-weight: 550;
+  color: var(--ink-2);
+}
+.field input {
+  font: inherit;
+  color: var(--ink);
+  padding: 0.66rem 0.8rem;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  transition:
+    border-color var(--fast),
+    box-shadow var(--fast);
+}
+.field input::placeholder {
+  color: var(--ink-3);
+}
+.field input:hover {
+  border-color: var(--ink-3);
+}
+
+.submit {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  border-radius: var(--r-md);
+  padding: 0.72rem 1rem;
+  box-shadow: var(--shadow-sm);
+  transition:
+    filter var(--fast),
+    opacity var(--fast);
+}
+.submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error,
+.notice {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: var(--r-sm);
+}
+.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+}
+.notice {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-left: 3px solid var(--warn);
+}
+
+
+/* The manager portal is the same form with a different temperature — a cooler
+   accent and a heavier frame, so it is obvious at a glance which door you are
+   standing at. It is framing, not security: both post to the same endpoint. */
+.manager {
+  --accent: #0e7490;
+  --accent-soft: #ecfeff;
+  --accent-border: #a5f3fc;
+  --accent-tint: rgba(14, 116, 144, 0.08);
+}
+:global(:root[data-theme="dark"]) .manager,
+:global(:root:not([data-theme="light"])) .manager {
+  --accent: #22d3ee;
+  --accent-ink: #062c33;
+  --accent-soft: #0b3138;
+  --accent-border: #155e6b;
+}
+.manager .card {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.hint {
+  margin: 1rem 0 0;
+  font-size: 0.76rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.switch {
+  display: block;
+  width: 100%;
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--accent);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+.switch:hover {
+  text-decoration: underline;
+}
+
+/* Credential helper. Styled as an obvious development affordance — a dashed
+   warning frame, not a polished part of the product — so nobody mistakes it
+   for something intended to ship. */
+.hints {
+  margin-top: 1.2rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px dashed var(--warn);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+}
+.hintsLabel {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--warn);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.hintsLabel span {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+.hints ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hints button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.32rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.76rem;
+  text-align: left;
+  transition: all var(--fast);
+}
+.hints button:hover {
+  border-color: var(--warn);
+}
+.hintEmail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink);
+}
+.hintRole {
+  flex: none;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+.hintsWarn {
+  margin: 0.5rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--warn);
+}
+.hintsWarn code {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+}

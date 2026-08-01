@@ -1,0 +1,104 @@
+.welcome {
+  max-width: 680px;
+  margin: auto;
+  text-align: center;
+  padding: 1rem 1rem 2rem;
+}
+
+/* Reserves the hero's height while its chunk loads, so the copy below never
+   jumps once three.js arrives. */
+.heroSlot {
+  height: 215px;
+  margin-bottom: -0.35rem;
+}
+
+.welcome h2 {
+  font-size: 1.5rem;
+  letter-spacing: -0.028em;
+  margin: 0 0 0.5rem;
+}
+
+.welcome p {
+  margin: 0 auto;
+  max-width: 50ch;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+}
+
+.grid {
+  margin-top: 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  transition:
+    border-color var(--fast),
+    background var(--fast),
+    transform var(--fast),
+    box-shadow var(--fast);
+  animation: rise 0.42s var(--ease) both;
+  animation-delay: calc(var(--i) * 55ms);
+}
+.card:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.icon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.4;
+}
+.body b {
+  font-weight: 550;
+  font-size: 0.87rem;
+}
+.body small {
+  font-size: 0.73rem;
+  color: var(--ink-3);
+}
+
+.foot {
+  margin-top: 1.2rem;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

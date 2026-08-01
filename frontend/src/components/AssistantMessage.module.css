@@ -1,0 +1,62 @@
+.degraded :global(.avatarSlot),
+.degraded > span:first-child {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Rendered under the latest answer only, so the thread doesn't fill with stale
+   prompts as it grows. */
+.followups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+}
+.followupsLabel {
+  font-size: 11px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.followup {
+  font-size: 0.76rem;
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  transition: all var(--fast);
+  animation: rise 0.34s var(--ease) both;
+  animation-delay: calc(var(--i) * 60ms + 80ms);
+}
+.followup::before {
+  content: "↳ ";
+  color: var(--ink-3);
+}
+.followup:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
