@@ -39,7 +39,12 @@ export function mentionedUser(prompt: string, users: User[]): User | null {
  * Team questions ("who spent the most?", "compare the team") are not
  * first-person and are unaffected.
  */
-const FIRST_PERSON = /\b(my|me|mine|i'm|i am|am i|did i|do i|my own)\b/i;
+/* Possessives and first-person subjects only. A bare "me" is not enough:
+ * "tell me about X" is a request for information about X, and matching it
+ * turned every such question into a "which client?" prompt -- including probes
+ * the server's own guardrails were waiting to refuse, which the clarify step
+ * then walked around. */
+const FIRST_PERSON = /\b(my|mine|my own|i'm|i am|am i|did i|do i|should i|can i)\b/i;
 
 export function needsASubject(prompt: string, users: User[]): boolean {
   if (mentionedUser(prompt, users)) return false;

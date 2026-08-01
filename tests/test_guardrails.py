@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from src.guardrails import input_guardrails as ig
+from src.data.roster import InMemoryRoster
 from src.guardrails.input_guardrails import InputGuardrails
 from src.guardrails.output_guardrails import (
     FLAG_HALLUCINATION,
@@ -604,3 +605,60 @@ def test_correcting_yourself_is_not_an_injection(guard):
         user_name="Jose BazBaz",
     )
     assert result.allowed
+
+
+# -- naming an account that does not exist ------------------------------------
+
+
+@pytest.fixture
+def manager_guard():
+    return InputGuardrails(
+        max_prompt_chars=200,
+        roster=InMemoryRoster(user_ids=list(USERS), user_names=list(USERS.values())),
+    )
+
+
+def test_a_manager_naming_a_missing_account_is_told_so(manager_guard):
+    """Previously this fell through every check.
+
+    The cross-user guard is skipped for `read:any` by design, so a privileged
+    caller naming a non-existent account reached the model, which answered about
+    whichever accounts it could reach and presented that as the answer.
+    """
+    result = manager_guard.check(
+        "Tell me about user_xyz's spending",
+        user_id="usr_manager",
+        user_name="Manager",
+        can_read_all=True,
+    )
+    assert not result.allowed
+    assert "unknown_account_named" in result.flags
+    assert "user_xyz" in (result.refusal or "")
+
+
+def test_a_manager_naming_a_real_account_is_allowed(manager_guard):
+    real = next(iter(USERS))
+    result = manager_guard.check(
+        f"Tell me about {real}'s spending",
+        user_id="usr_manager",
+        user_name="Manager",
+        can_read_all=True,
+    )
+    assert result.allowed
+
+
+def test_an_ordinary_caller_gets_no_membership_oracle(manager_guard):
+    """The refusal must not distinguish a real id from an invented one.
+
+    Refusing differently would let anyone enumerate valid account ids by
+    watching which phrasing bounces.
+    """
+    invented = manager_guard.check(
+        "Tell me about user_xyz's spending", user_id="u1", user_name="Jose"
+    )
+    real = manager_guard.check(
+        f"Tell me about {next(iter(USERS))}'s spending", user_id="u1", user_name="Jose"
+    )
+    assert not invented.allowed and not real.allowed
+    assert invented.flags == real.flags
+    assert invented.refusal == real.refusal

@@ -74,6 +74,19 @@ def candidate_name_tokens(prompt: str, exclude: Iterable[str] = ()) -> set[str]:
 
 
 class UserRoster(Protocol):
+
+    def knows_user_id(self, user_id: str) -> bool:
+        """Whether this id names a real account in the tenant.
+
+        Only ever called for a caller holding `read:any`. For anyone else this
+        question must not be answerable: refusing on a hit and proceeding on a
+        miss turns the guardrail into an oracle for enumerating valid ids. A
+        manager can already list every account, so telling them an id is unknown
+        discloses nothing they could not read directly -- and silently answering
+        about somebody else instead is far worse.
+        """
+        ...
+
     """The two questions the cross-user guardrail needs answered."""
 
     def mentions_other_user_id(self, prompt_lower: str, current_user_id: str) -> bool: ...
@@ -98,6 +111,9 @@ class InMemoryRoster:
     def mentions_other_user_id(self, prompt_lower: str, current_user_id: str) -> bool:
         current = (current_user_id or "").lower()
         return any(uid != current and uid in prompt_lower for uid in self.user_ids)
+
+    def knows_user_id(self, user_id: str) -> bool:
+        return (user_id or "").lower() in self.user_ids
 
     def mentions_other_user_name(
         self, prompt: str, current_user_id: str, current_user_name: str, exclude: Iterable[str] = ()
@@ -139,6 +155,22 @@ class SqlRoster:
             token.lower() != current
             for token in re.findall(r"\busr_[a-z0-9]{4,}\b", prompt_lower, re.IGNORECASE)
         )
+
+    def knows_user_id(self, user_id: str) -> bool:
+        from sqlalchemy import select  # noqa: PLC0415
+
+        from ..db.schema import transactions  # noqa: PLC0415
+
+        statement = (
+            select(transactions.c.user_id)
+            .where(
+                transactions.c.tenant_id == self.tenant_id,
+                transactions.c.user_id == user_id,
+            )
+            .limit(1)
+        )
+        with self.engine.connect() as conn:
+            return conn.execute(statement).first() is not None
 
     def mentions_other_user_name(
         self, prompt: str, current_user_id: str, current_user_name: str, exclude: Iterable[str] = ()

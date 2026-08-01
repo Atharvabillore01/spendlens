@@ -28,6 +28,7 @@ FLAG_SCOPE = "scope_violation"
 FLAG_EMPTY = "empty_prompt"
 FLAG_POPULATION = "population_query_denied"
 FLAG_GREETING = "greeting"
+FLAG_UNKNOWN_ACCOUNT = "unknown_account_named"
 
 
 INJECTION_PATTERNS: tuple[re.Pattern, ...] = tuple(
@@ -217,6 +218,20 @@ REFUSAL_POPULATION = (
 )
 REFUSAL_EMPTY = "I didn't catch a question there. Ask me anything about your spending, income or savings."
 
+# Only ever shown to a caller holding `read:any`. Naming an account that does
+# not exist previously fell through every check -- the cross-user guard is
+# skipped for a privileged caller by design -- and the model answered about
+# whichever accounts it could reach, presented as though it had answered the
+# question. Saying "there is no such account" discloses nothing a manager cannot
+# read from the roster directly.
+REFUSAL_UNKNOWN_ACCOUNT = (
+    "There's no account matching {named} in this tenant. Name one of the "
+    "accounts you can see, and I'll read it."
+)
+
+# Anything id-shaped: `usr_a1b2c3d4`, `user_xyz`, `user-42`.
+ACCOUNT_TOKEN = re.compile(r"\b(usr[_-][a-z0-9]{2,}|user[_-][a-z0-9]{2,})\b", re.IGNORECASE)
+
 # A greeting is how people open a conversation, not an attempt to take one
 # off-topic. Treating "hello" as a scope violation was technically consistent --
 # it carries no finance vocabulary -- and made the first thing a new user ever
@@ -379,6 +394,21 @@ class InputGuardrails:
 
     # -- entry point ----------------------------------------------------------
 
+    def unknown_accounts_named(self, prompt: str, current_user_id: str) -> list[str]:
+        """Account-shaped tokens in the prompt that name no real account."""
+        current = (current_user_id or "").lower()
+        missing: list[str] = []
+        for match in ACCOUNT_TOKEN.finditer(prompt or ""):
+            token = match.group(0)
+            if token.lower() == current:
+                continue
+            try:
+                if not self.roster.knows_user_id(token):
+                    missing.append(token)
+            except Exception:  # noqa: BLE001 -- a roster that cannot answer is not a refusal
+                continue
+        return missing
+
     @staticmethod
     def detect_pleasantry(prompt: str) -> Optional[str]:
         """"greeting", "courtesy", or None if this is a real question.
@@ -446,6 +476,21 @@ class InputGuardrails:
         # Checked after injection and cross-user, so "hi, ignore your
         # instructions" is still caught as what it actually is, and before
         # scope, which would otherwise refuse it for lacking finance words.
+        # A privileged caller may name anybody -- but only somebody who exists.
+        # Checked here rather than in `detect_cross_user`, which is skipped
+        # entirely for `read:any` and whose refusal is deliberately membership-
+        # blind for everyone else.
+        if can_read_all:
+            unknown = self.unknown_accounts_named(text, user_id)
+            if unknown:
+                return InputGuardrailResult(
+                    False,
+                    text,
+                    flags + [FLAG_UNKNOWN_ACCOUNT],
+                    REFUSAL_UNKNOWN_ACCOUNT.format(named=f"'{unknown[0]}'"),
+                    notice,
+                )
+
         pleasantry = self.detect_pleasantry(text)
         if pleasantry:
             return InputGuardrailResult(

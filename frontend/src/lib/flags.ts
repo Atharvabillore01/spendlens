@@ -10,6 +10,8 @@ export const FLAGS: Record<string, { label: string; danger?: boolean }> = {
   // Answered, not blocked: a greeting gets a welcome, so it must not wear
   // the blocked treatment or the warning avatar.
   greeting: { label: "greeting" },
+  // Refused, but not an attack: a manager named an account that does not exist.
+  unknown_account_named: { label: "unknown account", danger: true },
   user_not_found: { label: "unknown user", danger: true },
   empty_prompt: { label: "empty prompt", danger: true },
   prompt_truncated: { label: "prompt truncated" },
