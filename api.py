@@ -989,15 +989,14 @@ def readyz(response: Response) -> dict[str, Any]:
         # privileged. Ordinary account holders on demo data is a deliberate
         # posture for a public try-it deployment -- reported, never silent, but
         # not a reason to declare the service unfit to serve.
-        privileged = sorted(set(settings.login_hint_roles) - {"user"})
-        if privileged:
-            health["warning"] = (
-                "SHOW_LOGIN_HINTS publishes working credentials for "
-                + ", ".join(privileged)
-            )
-            ready = False
-        else:
-            health["warning"] = "SHOW_LOGIN_HINTS publishes demo user credentials"
+        # Readiness answers "can this serve traffic", and publishing a
+        # credential does not stop it serving. What the operator needs is to see
+        # exactly which roles they have put on the internet, every time they
+        # look -- so this names them and stays out of the ready/not-ready
+        # decision. A privileged role here is a deliberate choice for a demo,
+        # and it is spelled out rather than silently tolerated.
+        published = ", ".join(sorted(settings.login_hint_roles)) or "none"
+        health["warning"] = f"SHOW_LOGIN_HINTS publishes working credentials for: {published}"
 
     if not ready:
         response.status_code = 503

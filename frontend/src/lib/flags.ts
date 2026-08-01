@@ -7,6 +7,9 @@ export const FLAGS: Record<string, { label: string; danger?: boolean }> = {
   injection_detected: { label: "injection blocked", danger: true },
   cross_user_access_attempt: { label: "cross-user blocked", danger: true },
   scope_violation: { label: "off-topic redirect", danger: true },
+  // Answered, not blocked: a greeting gets a welcome, so it must not wear
+  // the blocked treatment or the warning avatar.
+  greeting: { label: "greeting" },
   user_not_found: { label: "unknown user", danger: true },
   empty_prompt: { label: "empty prompt", danger: true },
   prompt_truncated: { label: "prompt truncated" },

@@ -27,13 +27,19 @@ FLAG_CROSS_USER = "cross_user_access_attempt"
 FLAG_SCOPE = "scope_violation"
 FLAG_EMPTY = "empty_prompt"
 FLAG_POPULATION = "population_query_denied"
+FLAG_GREETING = "greeting"
 
 
 INJECTION_PATTERNS: tuple[re.Pattern, ...] = tuple(
     re.compile(p, re.IGNORECASE)
     for p in (
-        r"\bignore\s+(?:all\s+|any\s+)?(?:the\s+)?(?:previous|prior|above|earlier|preceding|foregoing)\b",
-        r"\bdisregard\s+(?:all\s+|any\s+)?(?:the\s+)?(?:previous|prior|above|earlier|system)\b",
+        # `your`/`our` as well as `the`: "ignore your previous instructions"
+        # carried enough finance vocabulary to satisfy the scope check and
+        # reached the model unflagged, while the `the` phrasing was blocked.
+        # `my` is deliberately excluded -- "ignore my previous question" is a
+        # user correcting themselves, not an attack.
+        r"\bignore\s+(?:all\s+|any\s+)?(?:the\s+|your\s+|our\s+)?(?:previous|prior|above|earlier|preceding|foregoing)\b",
+        r"\bdisregard\s+(?:all\s+|any\s+)?(?:the\s+|your\s+|our\s+)?(?:previous|prior|above|earlier|system)\b",
         r"\bforget\s+(?:everything|all|your)\b.{0,30}\b(?:instruction|rule|prompt|told)\b",
         r"\b(?:reveal|show|print|repeat|output|display|dump|expose|leak)\b.{0,40}\b(?:system\s*prompts?|initial\s+instructions?|your\s+instructions?|prompt\s+above|configuration)\b",
         r"\bwhat\s+(?:are|were)\s+your\s+(?:original\s+|initial\s+|system\s+)?instructions\b",
@@ -211,6 +217,41 @@ REFUSAL_POPULATION = (
 )
 REFUSAL_EMPTY = "I didn't catch a question there. Ask me anything about your spending, income or savings."
 
+# A greeting is how people open a conversation, not an attempt to take one
+# off-topic. Treating "hello" as a scope violation was technically consistent --
+# it carries no finance vocabulary -- and made the first thing a new user ever
+# saw a refusal, flagged in the interface as a blocked request. These get a
+# welcome instead, and their own flag, so the interface stops calling them
+# violations.
+#
+# Matched only when the *entire* message is a pleasantry: "hi, what did I spend
+# on food?" is a real question wearing a greeting, and belongs on the normal
+# path. Anything with a question mark or more than a few words is not this.
+GREETING_PATTERN = re.compile(
+    r"^(?:hi|hii+|hey+|hello+|helo|yo|sup|howdy|hiya|namaste|greetings|"
+    r"good\s*(?:morning|afternoon|evening|day)|"
+    r"how\s*(?:are\s*(?:you|u)|is\s*it\s*going|do\s*you\s*do)|"
+    r"what'?s\s*up|who\s*are\s*(?:you|u)|what\s*(?:can|do)\s*you\s*do)"
+    r"[\s!.,?]*(?:there|everyone|team|bot)?[\s!.,?]*$",
+    re.IGNORECASE,
+)
+COURTESY_PATTERN = re.compile(
+    r"^(?:thanks?|thank\s*you|thx|ty|cheers|nice|cool|great|awesome|perfect|ok(?:ay)?|"
+    r"bye|goodbye|see\s*(?:you|ya)|good\s*night|gn)"
+    r"[\s!.,]*(?:a\s*lot|so\s*much|mate|man)?[\s!.,]*$",
+    re.IGNORECASE,
+)
+
+GREETING_BODY = (
+    "I'm your transactions assistant — I can break down where your money went, "
+    "show trends over time, compare one period against another and find your top "
+    "merchants. Try \"What did I spend the most on last month?\""
+)
+COURTESY_REPLY = (
+    "Any time. If you want to keep going, try \"How does last month compare with "
+    "the one before?\" or \"Show me my spending trend\"."
+)
+
 TRUNCATION_NOTICE = "[Note: your message was longer than the limit and has been shortened.]"
 
 
@@ -338,6 +379,31 @@ class InputGuardrails:
 
     # -- entry point ----------------------------------------------------------
 
+    @staticmethod
+    def detect_pleasantry(prompt: str) -> Optional[str]:
+        """"greeting", "courtesy", or None if this is a real question.
+
+        Length-capped before the patterns run: a long message that happens to
+        start with "hi" is a question, and the anchored patterns would reject it
+        anyway -- this just makes that intent explicit and cheap.
+        """
+        text = (prompt or "").strip()
+        if not text or len(text.split()) > 5:
+            return None
+        if GREETING_PATTERN.match(text):
+            return "greeting"
+        if COURTESY_PATTERN.match(text):
+            return "courtesy"
+        return None
+
+    @staticmethod
+    def _welcome(kind: str, user_name: str = "") -> str:
+        if kind == "courtesy":
+            return COURTESY_REPLY
+        # First name only. "Hi Jose Bazbaz" reads like a form letter.
+        first = (user_name or "").strip().split(" ")[0]
+        return f"Hi {first} — {GREETING_BODY}" if first else f"Hi — {GREETING_BODY}"
+
     def check(
         self,
         prompt: str,
@@ -377,6 +443,15 @@ class InputGuardrails:
         # product is *about* spending across account holders. Without this,
         # "how do I rank" is refused for lacking finance vocabulary even though
         # it was just identified as a question this system exists to answer.
+        # Checked after injection and cross-user, so "hi, ignore your
+        # instructions" is still caught as what it actually is, and before
+        # scope, which would otherwise refuse it for lacking finance words.
+        pleasantry = self.detect_pleasantry(text)
+        if pleasantry:
+            return InputGuardrailResult(
+                False, text, flags + [FLAG_GREETING], self._welcome(pleasantry, user_name), notice
+            )
+
         if not (population and can_read_all) and not self.in_scope(text, has_context=has_context):
             return InputGuardrailResult(False, text, flags + [FLAG_SCOPE], REFUSAL_SCOPE, notice)
 
