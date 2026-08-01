@@ -47,16 +47,24 @@ class UserCache:
 
     # -- user:{id}:query_history ---------------------------------------------
 
-    def get_query_history(self, user_id: str) -> list[dict]:
-        return self.backend.get(keys.query_history(user_id, self.tenant_id)) or []
+    def get_query_history(self, user_id: str, actor_id: Optional[str] = None) -> list[dict]:
+        return self.backend.get(keys.query_history(user_id, self.tenant_id, actor_id)) or []
 
-    def append_query_history(self, user_id: str, entry: dict) -> list[dict]:
-        """Ring buffer capped at `QUERY_HISTORY_MAX_N`; oldest evicted first."""
-        history = self.get_query_history(user_id)
+    def append_query_history(
+        self, user_id: str, entry: dict, actor_id: Optional[str] = None
+    ) -> list[dict]:
+        """Ring buffer capped at `QUERY_HISTORY_MAX_N`; oldest evicted first.
+
+        The read is scoped exactly like the write. Reading unscoped and writing
+        scoped seeds a manager's fresh thread with a copy of the account
+        holder's questions -- the leak this scoping exists to prevent, moving in
+        the other direction.
+        """
+        history = self.get_query_history(user_id, actor_id=actor_id)
         history.append(entry)
         history = history[-self.settings.query_history_max_n :]
         self.backend.set(
-            keys.query_history(user_id, self.tenant_id),
+            keys.query_history(user_id, self.tenant_id, actor_id),
             history,
             self.settings.query_history_ttl_s,
         )
@@ -64,12 +72,12 @@ class UserCache:
 
     # -- user:{id}:viz_state --------------------------------------------------
 
-    def get_viz_state(self, user_id: str) -> Optional[dict]:
-        return self.backend.get(keys.viz_state(user_id, self.tenant_id))
+    def get_viz_state(self, user_id: str, actor_id: Optional[str] = None) -> Optional[dict]:
+        return self.backend.get(keys.viz_state(user_id, self.tenant_id, actor_id))
 
-    def set_viz_state(self, user_id: str, state: dict) -> None:
+    def set_viz_state(self, user_id: str, state: dict, actor_id: Optional[str] = None) -> None:
         self.backend.set(
-            keys.viz_state(user_id, self.tenant_id), state, self.settings.viz_state_ttl_s
+            keys.viz_state(user_id, self.tenant_id, actor_id), state, self.settings.viz_state_ttl_s
         )
 
     # -- chart access grants --------------------------------------------------

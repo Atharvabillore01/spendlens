@@ -36,12 +36,33 @@ def profile(user_id: str, tenant_id: Optional[str] = None) -> str:
     return _scoped(PROFILE.format(user_id=user_id), tenant_id)
 
 
-def query_history(user_id: str, tenant_id: Optional[str] = None) -> str:
-    return _scoped(QUERY_HISTORY.format(user_id=user_id), tenant_id)
+def _by_reader(key: str, user_id: str, actor_id: Optional[str]) -> str:
+    """Namespace conversation state by who is holding the conversation.
+
+    The profile is a property of the account and is shared. History and
+    visualisation state are properties of a *conversation*, and a manager asking
+    about somebody is not that person's conversation: written under the subject
+    alone, a manager's questions became the account holder's few-shot context
+    and their follow-up ("break that down") resolved against the manager's last
+    chart. Same tenant, same user, two different threads.
+
+    A self-read keeps the brief's unprefixed key names.
+    """
+    if not actor_id or actor_id == user_id:
+        return key
+    return f"actor:{actor_id}:{key}"
 
 
-def viz_state(user_id: str, tenant_id: Optional[str] = None) -> str:
-    return _scoped(VIZ_STATE.format(user_id=user_id), tenant_id)
+def query_history(
+    user_id: str, tenant_id: Optional[str] = None, actor_id: Optional[str] = None
+) -> str:
+    return _scoped(_by_reader(QUERY_HISTORY.format(user_id=user_id), user_id, actor_id), tenant_id)
+
+
+def viz_state(
+    user_id: str, tenant_id: Optional[str] = None, actor_id: Optional[str] = None
+) -> str:
+    return _scoped(_by_reader(VIZ_STATE.format(user_id=user_id), user_id, actor_id), tenant_id)
 
 
 def chart_grant(filename: str) -> str:

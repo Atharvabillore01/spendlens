@@ -200,6 +200,48 @@ ingest_batches = Table(
 )
 
 
+# Shared cache and rate-limit state.
+#
+# The in-memory backend gives every process its own buckets, which on serverless
+# means every invocation starts with a full allowance and the limit never binds
+# at all. Redis is the usual answer; this exists because the deployment already
+# has a database and adding a second stateful dependency to a demo buys nothing.
+# One indexed lookup and one upsert per limited request is well within what this
+# workload asks of Postgres.
+kv_entries = Table(
+    "kv_entries",
+    metadata,
+    Column("key", String(512), primary_key=True),
+    Column("value", Text, nullable=False),
+    # Nullable means "never expires". Expiry is enforced on read rather than by
+    # a sweeper, so a missed cleanup can never serve a stale value.
+    Column("expires_at", DateTime(timezone=True), nullable=True),
+    Index("ix_kv_expires", "expires_at"),
+)
+
+# Append-only audit trail.
+#
+# stdout is fine until someone needs to answer "who read this account, and
+# when" six months later. Rows are never updated or deleted by the application;
+# the columns that get queried are promoted out of the payload so that question
+# is an index lookup rather than a scan over JSON.
+audit_entries = Table(
+    "audit_entries",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("timestamp", DateTime(timezone=True), server_default=func.now(), nullable=False),
+    Column("event", String(64), nullable=False),
+    Column("tenant_id", String(64), nullable=True),
+    Column("actor_id", String(64), nullable=True),
+    Column("user_id", String(64), nullable=True),
+    Column("impersonated", Boolean, nullable=False, default=False),
+    Column("payload", Text, nullable=False, default="{}"),
+    Index("ix_audit_tenant_time", "tenant_id", "timestamp"),
+    Index("ix_audit_actor_time", "actor_id", "timestamp"),
+    Index("ix_audit_subject_time", "user_id", "timestamp"),
+)
+
+
 POSTGRES_TUNING = (
     # The profile scan reads one user's whole history; BRIN on the date column
     # keeps that cheap once the table is large and naturally date-ordered.
@@ -225,5 +267,7 @@ __all__ = [
     "user_name_parts",
     "transactions",
     "ingest_batches",
+    "kv_entries",
+    "audit_entries",
     "create_all",
 ]

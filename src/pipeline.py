@@ -192,7 +192,7 @@ class TransactionRAGPipeline:
         # way, so elliptical follow-ups ("how has that changed?") aren't refused
         # for lacking finance vocabulary. This reads only the caller's *own*
         # history, so no cross-user surface is opened before the guardrails run.
-        history = self.cache.get_query_history(user_id)
+        history = self.cache.get_query_history(user_id, actor_id=actor_id)
         guard = self.input_guardrails.check(
             prompt,
             user_id,
@@ -229,7 +229,7 @@ class TransactionRAGPipeline:
 
         # -- Stage 1b: profile (cache hit/miss) ------------------------------
         profile, cache_hit = self.cache.get_or_build_profile(user_id, self.profiles.build)
-        viz_state = self.cache.get_viz_state(user_id)
+        viz_state = self.cache.get_viz_state(user_id, actor_id=actor_id)
         trace.cache(cache_hit, len(history))
 
         facts = self._fact_pack(user_id)
@@ -690,9 +690,10 @@ class TransactionRAGPipeline:
                     "pandas_operation": pandas_operation or "aggregate over filtered user frame",
                     "result_summary": self._history_summary(response, data_summary),
                 },
+                actor_id=actor_id,
             )
             if viz_state:
-                self.cache.set_viz_state(user_id, viz_state)
+                self.cache.set_viz_state(user_id, viz_state, actor_id=actor_id)
 
         latency_ms = int((time.perf_counter() - started) * 1000)
 

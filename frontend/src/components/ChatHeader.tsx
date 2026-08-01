@@ -7,21 +7,34 @@ interface Props {
   asOf: string;
   turnCount: number;
   onClear: () => void;
+  /** Console mode: the thread spans every account, so naming one at the top
+   *  would be a lie about what the next answer covers. */
+  console?: boolean;
+  accountCount?: number;
 }
 
-export default function ChatHeader({ user, asOf, turnCount, onClear }: Props) {
+export default function ChatHeader({
+  user,
+  asOf,
+  turnCount,
+  onClear,
+  console: isConsole,
+  accountCount = 0,
+}: Props) {
   return (
     <header className={styles.head}>
       <div className={styles.who}>
-        <span className={`${styles.avatar} ${user ? styles.brandish : ""}`}>
-          {user ? initials(user.user_name) : "–"}
+        <span className={`${styles.avatar} ${user || isConsole ? styles.brandish : ""}`}>
+          {isConsole ? "◍" : user ? initials(user.user_name) : "–"}
         </span>
         <div>
-          <h1>{user?.user_name ?? "Select an account"}</h1>
+          <h1>{isConsole ? "Team console" : (user?.user_name ?? "Select an account")}</h1>
           <p>
-            {user
-              ? `${user.transaction_count.toLocaleString()} transactions · through ${asOf}`
-              : "no account selected"}
+            {isConsole
+              ? `${accountCount} account${accountCount === 1 ? "" : "s"} · through ${asOf}`
+              : user
+                ? `${user.transaction_count.toLocaleString()} transactions · through ${asOf}`
+                : "no account selected"}
           </p>
         </div>
       </div>

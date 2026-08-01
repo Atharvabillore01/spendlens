@@ -106,3 +106,50 @@ def test_amounts_never_reach_the_log(secret):
         latency_ms=1, guardrail_flags=[], cache_hit=False, model_used=None,
     )
     assert secret not in entry["response_summary"]
+
+
+# -- conversation isolation ---------------------------------------------------
+
+
+def test_a_managers_questions_do_not_enter_the_account_holders_history():
+    """History is a property of a conversation, not of an account.
+
+    Written under the subject alone, a manager's questions became the account
+    holder's few-shot context -- the holder's next answer was conditioned on
+    somebody else's line of enquiry, and their `/users/{id}/cache` showed it.
+    """
+    from src.cache.kv_cache import InMemoryKVCache
+    from src.cache.user_cache import UserCache
+    from src.config import get_settings
+
+    cache = UserCache(InMemoryKVCache(), get_settings())
+    cache.append_query_history("usr_subject", {"prompt": "mine"}, actor_id="usr_subject")
+    cache.append_query_history("usr_subject", {"prompt": "the manager's"}, actor_id="usr_manager")
+
+    own = [e["prompt"] for e in cache.get_query_history("usr_subject")]
+    manager = [e["prompt"] for e in cache.get_query_history("usr_subject", actor_id="usr_manager")]
+    assert own == ["mine"]
+    assert manager == ["the manager's"]
+
+
+def test_a_self_read_keeps_the_unprefixed_key():
+    """The brief fixes these key names; a self-read must not drift off them."""
+    from src.cache import keys
+
+    assert keys.query_history("usr_a") == "user:usr_a:query_history"
+    assert keys.query_history("usr_a", actor_id="usr_a") == "user:usr_a:query_history"
+    assert keys.query_history("usr_a", actor_id="usr_mgr") == "actor:usr_mgr:user:usr_a:query_history"
+
+
+def test_follow_up_chart_state_is_also_per_conversation():
+    """"Break that down" must resolve against your own last chart."""
+    from src.cache.kv_cache import InMemoryKVCache
+    from src.cache.user_cache import UserCache
+    from src.config import get_settings
+
+    cache = UserCache(InMemoryKVCache(), get_settings())
+    cache.set_viz_state("usr_subject", {"tool": "mine"}, actor_id="usr_subject")
+    cache.set_viz_state("usr_subject", {"tool": "managers"}, actor_id="usr_manager")
+
+    assert cache.get_viz_state("usr_subject")["tool"] == "mine"
+    assert cache.get_viz_state("usr_subject", actor_id="usr_manager")["tool"] == "managers"

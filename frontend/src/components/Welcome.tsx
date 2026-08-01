@@ -8,6 +8,9 @@ import type { User } from "../types";
 const HeroField = lazy(() => import("./three/HeroField"));
 
 interface Props {
+  /** Console mode reframes the empty state around the team, and offers
+   *  team-shaped openers instead of first-person ones. */
+  console?: boolean;
   user: User | null;
   onAsk: (prompt: string) => void;
 }
@@ -37,7 +40,7 @@ const STARTERS = [
   },
 ];
 
-export default function Welcome({ user, onAsk }: Props) {
+export default function Welcome({ user, onAsk, console: isConsole }: Props) {
   const firstName = user?.user_name.split(" ")[0];
 
   return (
@@ -46,10 +49,17 @@ export default function Welcome({ user, onAsk }: Props) {
         <HeroField />
       </Suspense>
 
-      <h2>{firstName ? `Ask ${firstName}'s money anything` : "Select an account"}</h2>
+      <h2>
+        {isConsole
+          ? "Ask about the team"
+          : firstName
+            ? `Ask ${firstName}'s money anything`
+            : "Select an account"}
+      </h2>
       <p>
-        Every figure comes straight from your transactions and is checked before it reaches
-        you — the assistant explains the numbers, it never invents them.
+        {isConsole
+          ? "A question with no name covers every account. Type @ and a first name to ask about one of them."
+          : "Every figure comes straight from your transactions and is checked before it reaches you — the assistant explains the numbers, it never invents them."}
       </p>
 
       {user && (

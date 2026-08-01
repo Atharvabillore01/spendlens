@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type KeyboardEvent, type Ref } from "react";
+import { useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type Ref } from "react";
 import styles from "./Composer.module.css";
 
 interface Props {
@@ -13,6 +13,9 @@ interface Props {
    *  ordinary user has nobody to tag, and offering the affordance would imply
    *  a capability the API refuses. */
   mentionables?: { user_id: string; user_name: string }[];
+  /** Text pushed in from outside — clicking a name in the roster. The nonce is
+   *  what makes a repeat click register: the text alone would be unchanged. */
+  seed?: { text: string; nonce: number };
 }
 
 /** The handle for an account holder: their first name, which is what anyone
@@ -46,9 +49,17 @@ export default function Composer({
   onAsk,
   onCancel,
   mentionables,
+  seed,
 }: Props) {
   const [value, setValue] = useState("");
   const [highlight, setHighlight] = useState(0);
+  const seenSeed = useRef(0);
+
+  if (seed && seed.nonce !== seenSeed.current) {
+    seenSeed.current = seed.nonce;
+    // Appended, not replaced: a half-typed question must survive naming someone.
+    setValue((current) => (current ? `${current.trimEnd()} ${seed.text}` : seed.text));
+  }
 
   /* The mention menu opens on a trailing @token and nowhere else: mid-sentence
      text containing an email address must not turn the composer into a picker. */

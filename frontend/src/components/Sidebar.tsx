@@ -78,7 +78,11 @@ export default function Sidebar({
 
       {mayPickUser && (
       <nav className={styles.section} aria-label="Accounts">
-        <p className={styles.sectionLabel}>{canReadAll(identity) ? "Everyone" : "Accounts"}</p>
+        {/* In the console these are handles to address, not screens to switch
+            to: clicking one starts a mention in the composer. */}
+        <p className={styles.sectionLabel}>
+          {canReadAll(identity) ? "Ask about" : "Accounts"}
+        </p>
         <ul className={styles.navList}>
           {users.map((user) => (
             <li key={user.user_id}>
@@ -100,7 +104,9 @@ export default function Sidebar({
       </nav>
       )}
 
-      {activeUser && (
+      {/* "This account" is a lie in the console, where the thread spans every
+          account and the next question decides whose data it reads. */}
+      {activeUser && !canReadAll(identity) && (
         <div className={styles.section}>
           <p className={styles.sectionLabel}>This account</p>
           <ul className={styles.factList}>

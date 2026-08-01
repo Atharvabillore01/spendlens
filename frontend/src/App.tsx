@@ -11,7 +11,7 @@ import Transcript from "./components/Transcript";
 import UploadPage from "./components/UploadPage";
 import { useDevMode, useTheme } from "./hooks/usePreferences";
 import { useTranscripts } from "./hooks/useTranscripts";
-import { mentionedUser } from "./lib/mentions";
+import { handleFor, mentionedUser } from "./lib/mentions";
 import { uid } from "./lib/format";
 import { useRoute } from "./lib/routing";
 import styles from "./App.module.css";
@@ -321,13 +321,27 @@ export default function App() {
 
   /* ── render ────────────────────────────────────────────────────── */
 
+  /* Naming an account in the console composes a question about them rather
+     than switching the screen to them: the console's whole point is that one
+     thread covers everybody, and the subject of the *next* question comes from
+     the text. Ordinary users have no roster to click. */
+  const [mentionSeed, setMentionSeed] = useState<{ text: string; nonce: number } | undefined>();
+
   const selectUser = useCallback(
     (userId: string) => {
       if (busy) return;
+      if (readAll) {
+        const named = users.find((u) => u.user_id === userId);
+        if (named) {
+          setMentionSeed({ text: `@${handleFor(named.user_name)}`, nonce: Date.now() });
+          composerRef.current?.focus();
+          return;
+        }
+      }
       setCurrentUser(userId);
       setCacheEpoch((n) => n + 1);
     },
-    [busy],
+    [busy, readAll, users],
   );
 
   if (boot === "loading") {
@@ -406,8 +420,16 @@ export default function App() {
               asOf={asOf}
               turnCount={turns.filter((t) => t.role === "user").length}
               onClear={() => conversationKey && clear(conversationKey)}
+              console={readAll}
+              accountCount={users.length}
             />
-            <Transcript turns={turns} user={activeUser} busy={busy} onAsk={ask} />
+            <Transcript
+              turns={turns}
+              user={activeUser}
+              busy={busy}
+              onAsk={ask}
+              console={readAll}
+            />
             <Composer
               ref={composerRef}
               busy={busy}
@@ -416,6 +438,7 @@ export default function App() {
               onAsk={ask}
               onCancel={cancel}
               mentionables={readAll ? users : undefined}
+              seed={mentionSeed}
             />
           </>
         )}
