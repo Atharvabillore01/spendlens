@@ -13,9 +13,14 @@ __pycache__/
 .DS_Store
 
 # Local artefacts, none of which the function needs.
-output/
-data/
-.uploads/
+#
+# Leading slashes are load-bearing. These follow .gitignore matching, so a bare
+# `data/` also matches `src/data/` -- the category taxonomy -- and the function
+# then dies on import with `No module named 'src.data'`. Anchor anything whose
+# name is generic enough to appear deeper in the tree.
+/output/
+/data/
+/.uploads/
 audit.log
 *.log
 

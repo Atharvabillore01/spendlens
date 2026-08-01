@@ -1,26 +1,37 @@
 {
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 60,
-      "memory": 1024,
-      "includeFiles": "{src/**,api.py,demo.py,assessment_transaction_data.xlsx}"
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": "{src/**,api.py,demo.py,assessment_transaction_data.xlsx}",
+        "maxDuration": 60
+      }
     }
-  },
-  "rewrites": [
-    { "source": "/query", "destination": "/api/index" },
-    { "source": "/users", "destination": "/api/index" },
-    { "source": "/users/:path*", "destination": "/api/index" },
-    { "source": "/auth/:path*", "destination": "/api/index" },
-    { "source": "/ingest", "destination": "/api/index" },
-    { "source": "/ingest/:path*", "destination": "/api/index" },
-    { "source": "/requests", "destination": "/api/index" },
-    { "source": "/requests/:path*", "destination": "/api/index" },
-    { "source": "/charts/:path*", "destination": "/api/index" },
-    { "source": "/healthz", "destination": "/api/index" },
-    { "source": "/readyz", "destination": "/api/index" },
-    { "source": "/metrics", "destination": "/api/index" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    {
+      "src": "/(query|users|auth|ingest|requests|charts|healthz|readyz|metrics)(/.*)?",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1",
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/index.html"
+    }
   ]
 }

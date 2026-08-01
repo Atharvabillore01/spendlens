@@ -16,3 +16,5 @@ data/
 
 # The assessment brief is someone else's document, not this project's.
 *.docx.pdf
+.vercel
+.env*
