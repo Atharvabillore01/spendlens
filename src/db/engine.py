@@ -71,7 +71,39 @@ def build_engine(settings, url: Optional[str] = None) -> Engine:
         pool_timeout=settings.db_pool_timeout_s,
         pool_recycle=settings.db_pool_recycle_s,
         pool_pre_ping=True,
+        connect_args=_postgres_connect_args(target),
     )
+
+
+def _is_transaction_pooler(url: str) -> bool:
+    """Whether this URL points at a transaction-mode connection pooler.
+
+    Supabase (Supavisor), PgBouncer and friends multiplex many clients onto few
+    server connections by handing a connection back after every transaction. The
+    cost is that server-side state does not survive between statements --
+    including prepared statements.
+    """
+    return ":6543" in url or "pooler.supabase.com" in url
+
+
+def _postgres_connect_args(url: str) -> dict:
+    """Driver-level arguments a hosted Postgres needs and a local one does not.
+
+    psycopg3 prepares a statement server-side once it has seen it five times.
+    Against a transaction-mode pooler that is a latent failure, not an
+    optimisation: the prepare lands on one server connection and the execute
+    arrives on another, and the request dies with `prepared statement "_pg3_0"
+    does not exist` -- typically under load, after everything looked fine in
+    testing. `prepare_threshold=None` turns the optimisation off, which is the
+    correct trade when the pooler is what makes the connection count work at
+    all.
+
+    Session-mode poolers (port 5432) keep one server connection per client, so
+    they are left alone.
+    """
+    if _is_transaction_pooler(url):
+        return {"prepare_threshold": None}
+    return {}
 
 
 def get_engine(settings, url: Optional[str] = None) -> Engine:

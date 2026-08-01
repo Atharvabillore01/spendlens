@@ -66,6 +66,57 @@ EOF
   [ "$reply" = "y" ] || [ "$reply" = "Y" ] || exit 1
 fi
 
+# --- storage mode -------------------------------------------------------------
+# sql   -> transactions and logins live in Postgres (Supabase), so uploads and
+#          accounts survive the instance being destroyed. Requires auth: the app
+#          reports itself un-ready if it is serving multi-tenant data with
+#          AUTH_REQUIRED=false, and it is right to.
+# demo  -> stateless, reads the bundled workbook, no login. Nothing to persist,
+#          so nothing is lost when the instance scales to zero.
+MODE="${SPENDLENS_MODE:-sql}"
+
+if [ "$MODE" = "sql" ]; then
+  if ! have_secret database-url; then
+    cat >&2 <<'EOF'
+SPENDLENS_MODE=sql needs a database-url secret. From Supabase, take the
+*connection pooler* string -- not the db.<ref>.supabase.co one, which resolves
+to IPv6 only and is therefore unreachable from Koyeb -- and give it the
+SQLAlchemy driver prefix:
+
+  koyeb secrets create database-url --value \
+    'postgresql+psycopg://postgres.<ref>:<password>@aws-1-<region>.pooler.supabase.com:6543/postgres'
+
+An @ or : in the password must be percent-encoded (@ -> %40).
+Or deploy the stateless demo instead:  SPENDLENS_MODE=demo ./deploy/koyeb-deploy.sh
+EOF
+    exit 1
+  fi
+
+  # A signing secret nobody chose is better than one somebody reused. Generated
+  # once and kept in Koyeb; regenerating it invalidates every issued token.
+  if ! have_secret jwt-secret; then
+    echo "Creating jwt-secret..."
+    koyeb secrets create jwt-secret --value "$(python3 -c 'import secrets;print(secrets.token_urlsafe(48))')"
+  fi
+
+  ENV_ARGS+=(
+    --env STORAGE_BACKEND=sql
+    --env "DATABASE_URL={{ secret.database-url }}"
+    --env AUTH_REQUIRED=true
+    --env "JWT_SECRET={{ secret.jwt-secret }}"
+    # One instance, one worker. Supabase's free tier shares a modest pooled
+    # connection budget, and a pool sized for a server that does not exist is
+    # just a way to hit that ceiling.
+    --env DB_POOL_SIZE=3
+    --env DB_MAX_OVERFLOW=2
+  )
+else
+  ENV_ARGS+=(
+    --env STORAGE_BACKEND=dataframe
+    --env AUTH_REQUIRED=false
+  )
+fi
+
 # --- staging copy -------------------------------------------------------------
 # Only what the Dockerfile actually COPYs, plus the frontend sources it builds.
 #
@@ -102,14 +153,16 @@ done
 echo "Staged $(du -sh "$STAGE" | cut -f1) for upload."
 
 # --- deploy -------------------------------------------------------------------
-# STORAGE_BACKEND=dataframe keeps the whole deployment stateless: transactions
-# come from the bundled workbook, so nothing is lost when a Free Instance scales
-# to zero after an hour idle (its disk does not survive, and Free Instances
-# cannot mount a volume).
+# Storage comes from the mode block above. What is set here holds either way.
 #
-# The per-user rate limit is tightened from the default 20/min: on an anonymous
-# deployment the limiter keys on a user_id the caller supplies, so it throttles
-# honest traffic but does not stop someone determined to drain the LLM quota.
+# Charts are the exception to persistence in both modes: they render to
+# /app/output, which does not survive the instance. A chart URL is therefore
+# good until the next cold start, not forever.
+#
+# The per-user rate limit is tightened from the default 20/min because the URL
+# is public. In demo mode the limiter keys on a caller-supplied user_id, so it
+# throttles honest traffic without stopping someone set on draining the quota;
+# in sql mode it keys on the authenticated subject, which is a real bound.
 koyeb deploy "$STAGE" "$APP/$SERVICE" \
   --archive-builder docker \
   --archive-docker-dockerfile Dockerfile \
@@ -118,8 +171,6 @@ koyeb deploy "$STAGE" "$APP/$SERVICE" \
   --ports 8000:http \
   --routes /:8000 \
   --checks 8000:http:/healthz \
-  --env STORAGE_BACKEND=dataframe \
-  --env AUTH_REQUIRED=false \
   --env SHOW_LOGIN_HINTS=false \
   --env CACHE_BACKEND=memory \
   --env LLM_PROVIDER=auto \

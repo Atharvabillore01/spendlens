@@ -26,6 +26,15 @@ koyeb secrets create openrouter-api-key --value 'sk-or-v1-...'
 koyeb secrets create groq-api-key       --value 'gsk_...'
 ```
 
+And, for the default `sql` mode, the database (see *Persistence* below):
+
+```bash
+koyeb secrets create database-url --value \
+  'postgresql+psycopg://postgres.<ref>:<password>@aws-1-<region>.pooler.supabase.com:6543/postgres'
+```
+
+`jwt-secret` is generated for you on first deploy if it does not exist.
+
 **Mint keys for this deployment specifically.** The URL is public and
 unauthenticated, so anyone who finds it spends your free-tier quota. Nothing in
 the deployment can prevent that — the per-user rate limit keys on a `user_id`
@@ -60,12 +69,75 @@ from the offline path.
 
 ---
 
+## Persistence: Supabase Postgres
+
+Two modes, chosen with `SPENDLENS_MODE`:
+
+```bash
+./deploy/koyeb-deploy.sh                       # sql — the default
+SPENDLENS_MODE=demo ./deploy/koyeb-deploy.sh   # stateless, no login
+```
+
+**`sql`** puts transactions and logins in Supabase, so uploaded data and
+accounts survive the instance being destroyed — which happens on every scale to
+zero, since a Free Instance cannot mount a volume.
+
+**This forces authentication on.** `/readyz` reports the service un-ready if it
+is serving multi-tenant data with `AUTH_REQUIRED=false`, and that check is
+correct: without a token the `user_id` comes from the request body, so anyone
+could read anyone. So `sql` mode means visitors need a login, and the deployment
+is no longer a click-and-try demo. If you want the click-and-try version, use
+`SPENDLENS_MODE=demo` — with the bundled workbook there is nothing to persist in
+the first place.
+
+### Getting the connection string right
+
+Take the **connection pooler** string from Supabase, not the one on the
+project's main connection page:
+
+- `db.<ref>.supabase.co` resolves to **IPv6 only**. Koyeb egress is IPv4, so this
+  host is simply unreachable from the deployed container — it will connect fine
+  from a laptop and fail in production.
+- `aws-1-<region>.pooler.supabase.com:6543` is IPv4 and is what to use. Note
+  `aws-1`, not `aws-0`, for recent projects; the region here is the project's,
+  not necessarily the nearest one.
+- The username becomes `postgres.<project-ref>`, not `postgres`.
+- Percent-encode the password (`@` → `%40`).
+- Prefix the scheme with the driver: `postgresql+psycopg://`.
+
+Port 6543 is the *transaction* pooler, which hands the server connection back
+after every transaction. psycopg3 prepares a statement server-side after seeing
+it five times, and that prepare does not survive the handback — so around the
+sixth identical query you get `prepared statement "_pg3_0" does not exist`,
+under load, having passed every test. [`src/db/engine.py`](src/db/engine.py)
+detects a transaction pooler and sets `prepare_threshold=None` to prevent it.
+
+### Seeding
+
+Once, against the Supabase URL:
+
+```bash
+STORAGE_BACKEND=sql DATABASE_URL='postgresql+psycopg://...' \
+  python manage_accounts.py seed --password '<pick-one>'
+```
+
+Creates the schema, loads the workbook, and makes five logins: three account
+holders, one manager, one admin.
+
+### Supabase free-tier limits worth knowing
+
+- Projects **pause after 7 days** with no activity, and must be resumed from the
+  dashboard. A paused database means `/readyz` returns 503 and every query
+  fails — this deployment can sleep for a week very easily.
+- 500MB storage, 5GB egress. This dataset is 347 rows; not a concern.
+
 ## What the script sets, and why
 
 | Setting | Value | Reason |
 |---|---|---|
-| `STORAGE_BACKEND` | `dataframe` | Transactions come from the bundled workbook. Free Instances scale to zero after an hour idle and cannot mount a volume, so anything written to disk is gone by the next request. Stateless is the only correct shape here. |
-| `AUTH_REQUIRED` | `false` | Public demo. The frontend treats this as "signed in with nothing special" and asks for a `user_id` per query instead of a login. |
+| `STORAGE_BACKEND` | `sql` / `dataframe` | Per mode, above. |
+| `AUTH_REQUIRED` | `true` in sql mode | Not optional — the app refuses readiness without it when serving multi-tenant data. |
+| `DB_POOL_SIZE` | `3` (+2 overflow) | One instance, one worker. Supabase's free pooled-connection budget is modest, and a pool sized for servers that do not exist is just a way to hit the ceiling. |
 | `SHOW_LOGIN_HINTS` | `false` | Never publish working credentials, even demo ones. |
 | `CACHE_BACKEND` | `memory` | One instance, so a shared Redis buys nothing. |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Tightened from the default 20 because the URL is public. |
@@ -122,13 +194,14 @@ reasoning.
   chart rendered by A is not on B. Object storage is the fix, not more replicas.
 - **One free instance per account.** A staging copy alongside production means
   paying for one of them.
-- **Uploads do not persist.** `/ingest` needs `STORAGE_BACKEND=sql`; in
-  dataframe mode it refuses rather than accepting data it cannot keep.
+- **Two free tiers, two idle timers.** Koyeb destroys the instance after 1 hour
+  idle; Supabase pauses the project after 7 days idle. The first costs a slow
+  first request, the second costs a manual resume in the dashboard.
 
 ## If you outgrow the free tier
 
 `docker-compose.yml` is the production-shaped version: Postgres for
 transactions, Redis so the cache and rate limiter stay correct across replicas,
-`AUTH_REQUIRED=true`. Moving there is an env-var change and a database URL —
-set `STORAGE_BACKEND=sql`, point `DATABASE_URL` at a managed Postgres, seed
-accounts with `manage_accounts.py`, and drop `AUTH_REQUIRED=false`.
+`AUTH_REQUIRED=true`. The application-level move has already been made by
+running in `sql` mode — what is left is a paid instance that does not sleep, a
+Redis for shared cache and rate-limit state, and object storage for charts.
