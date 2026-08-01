@@ -179,6 +179,12 @@ class Settings(BaseSettings):
     # real multi-tenant data -- an operator has to make that trade knowingly.
     show_login_hints: bool = False
     login_hint_password: str = ""
+    # Which roles a published hint may name. `/auth/hints` is unauthenticated
+    # by necessity -- it is read before anyone can sign in -- so whatever it
+    # lists is public, and listing a manager or an admin next to a shared
+    # password is granting that role to the internet. A public demo wants the
+    # click-to-try convenience for ordinary account holders and nothing more.
+    login_hint_roles: list[str] = Field(default_factory=lambda: ["user"])
     jwt_secret: str = ""
     jwt_algorithm: Literal["HS256", "HS384", "HS512", "RS256", "ES256"] = "HS256"
     # Asymmetric verification: PEM public key (RS256/ES256). Ignored for HS*.

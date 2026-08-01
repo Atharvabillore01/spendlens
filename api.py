@@ -372,11 +372,16 @@ def login_hints() -> dict[str, Any]:
         raise HTTPException(status_code=404, detail={"error": "not_found"})
 
     accounts = list_accounts(auth_engine, settings.default_tenant_id)
+    # Role filter, not a display preference: everything returned here is public,
+    # so naming a privileged account alongside the shared password would publish
+    # that privilege. The manager and admin doors still exist -- they just need
+    # a credential nobody handed out.
+    allowed = set(settings.login_hint_roles)
     return {
         "accounts": [
             {"email": a.email, "role": a.role, "user_id": a.user_id}
             for a in accounts
-            if a.is_active
+            if a.is_active and a.role in allowed
         ],
         # The server stores only hashes, so it cannot reveal real passwords.
         # This is the shared one an operator set when seeding.
@@ -978,8 +983,19 @@ def readyz(response: Response) -> dict[str, Any]:
     )
     health["login_hints"] = settings.show_login_hints
     if settings.show_login_hints and settings.storage_backend == "sql":
-        health["warning"] = "SHOW_LOGIN_HINTS publishes working credentials"
-        ready = False
+        # Publishing a credential is only a fault when it reaches something
+        # privileged. Ordinary account holders on demo data is a deliberate
+        # posture for a public try-it deployment -- reported, never silent, but
+        # not a reason to declare the service unfit to serve.
+        privileged = sorted(set(settings.login_hint_roles) - {"user"})
+        if privileged:
+            health["warning"] = (
+                "SHOW_LOGIN_HINTS publishes working credentials for "
+                + ", ".join(privileged)
+            )
+            ready = False
+        else:
+            health["warning"] = "SHOW_LOGIN_HINTS publishes demo user credentials"
 
     if not ready:
         response.status_code = 503
