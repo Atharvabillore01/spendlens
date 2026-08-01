@@ -14,7 +14,7 @@ constraint. The 0.1 vCPU is: expect a few seconds for a matplotlib render.
 ## Once
 
 ```bash
-brew install koyeb/tap/koyeb-cli
+brew install koyeb/tap/koyeb
 koyeb login
 ```
 

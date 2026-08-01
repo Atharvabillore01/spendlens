@@ -31,7 +31,7 @@ trap 'rm -rf "$(dirname "$STAGE")"' EXIT
 
 command -v koyeb >/dev/null 2>&1 || {
   echo "koyeb CLI not found. Install it with:" >&2
-  echo "  brew install koyeb/tap/koyeb-cli" >&2
+  echo "  brew install koyeb/tap/koyeb" >&2
   exit 1
 }
 
