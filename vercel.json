@@ -1,0 +1,26 @@
+{
+  "buildCommand": "cd frontend && npm ci && npm run build",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "{src/**,api.py,demo.py,assessment_transaction_data.xlsx}"
+    }
+  },
+  "rewrites": [
+    { "source": "/query", "destination": "/api/index" },
+    { "source": "/users", "destination": "/api/index" },
+    { "source": "/users/:path*", "destination": "/api/index" },
+    { "source": "/auth/:path*", "destination": "/api/index" },
+    { "source": "/ingest", "destination": "/api/index" },
+    { "source": "/ingest/:path*", "destination": "/api/index" },
+    { "source": "/requests", "destination": "/api/index" },
+    { "source": "/requests/:path*", "destination": "/api/index" },
+    { "source": "/charts/:path*", "destination": "/api/index" },
+    { "source": "/healthz", "destination": "/api/index" },
+    { "source": "/readyz", "destination": "/api/index" },
+    { "source": "/metrics", "destination": "/api/index" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

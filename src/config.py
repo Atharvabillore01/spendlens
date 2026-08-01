@@ -104,6 +104,21 @@ class Settings(BaseSettings):
     circuit_breaker_cooldown_s: float = 60.0
 
     # ---- Storage ------------------------------------------------------------
+    # How a rendered PNG reaches the client.
+    #
+    # "url"    -- write to disk, return /charts/{name}, serve it on a later
+    #             request. Correct when one long-lived process both renders and
+    #             serves, which is every container deployment.
+    # "inline" -- return the PNG as a data: URI in the same response that
+    #             rendered it, and delete the file. Required on serverless,
+    #             where the GET that fetches the chart may land on a different
+    #             instance than the POST that drew it -- different /tmp,
+    #             different memory, so both the file and its ownership grant are
+    #             gone. It also sidesteps a real limitation of the download
+    #             link: <a download> is a plain browser navigation carrying no
+    #             Authorization header, so with AUTH_REQUIRED=true the URL form
+    #             is refused. A data: URI needs no credential at all.
+    chart_delivery: Literal["url", "inline"] = "url"
     chart_output_dir: Path = PROJECT_ROOT / "output"
     chart_dpi: int = 120
     audit_log_path: Optional[Path] = None  # None -> stdout logger only

@@ -24,6 +24,7 @@ has no `user_id` field for an ordinary caller; support tooling holding the
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import os
@@ -223,6 +224,31 @@ def _spa_shell() -> Response:
 def index() -> Response:
     """Serve the built single-page app."""
     return _spa_shell()
+
+
+def chart_refs(paths: list[str]) -> list[str]:
+    """Turn rendered chart paths into references a client can actually fetch.
+
+    Filesystem paths are never returned: they are meaningless to a client that
+    is not on this machine. Which reference is right depends on whether the
+    process that drew the chart will still be there when the browser asks for
+    it -- see `chart_delivery` in the settings for why serverless cannot use a
+    URL. Inlining consumes the file, since nothing will serve it afterwards.
+    """
+    if settings.chart_delivery != "inline":
+        return [f"/charts/{Path(p).name}" for p in paths]
+
+    refs: list[str] = []
+    for raw in paths:
+        path = Path(raw)
+        try:
+            encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+        except OSError as exc:  # noqa: PERF203 - one bad chart must not fail the turn
+            log.warning("chart %s could not be inlined: %s", path.name, exc)
+            continue
+        refs.append(f"data:image/png;base64,{encoded}")
+        path.unlink(missing_ok=True)
+    return refs
 
 
 
@@ -427,7 +453,7 @@ def query(
     )
     # Return chart URLs rather than filesystem paths so the response is usable
     # by a client that isn't on this machine.
-    result["visualizations"] = [f"/charts/{Path(p).name}" for p in result["visualizations"]]
+    result["visualizations"] = chart_refs(result["visualizations"])
 
     model = result.get("model_used") or ""
     metrics.record_turn(
@@ -733,7 +759,7 @@ def run_request(
     result = pipe.run(
         item.from_user_id, item.question, chart_theme=theme, can_read_all=True
     )
-    result["visualizations"] = [f"/charts/{Path(p).name}" for p in result["visualizations"]]
+    result["visualizations"] = chart_refs(result["visualizations"])
     updated = inbox.attach_computed(
         auth_engine, principal.tenant_id, request_id, result["response"], result["data_summary"]
     )

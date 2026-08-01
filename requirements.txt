@@ -23,6 +23,9 @@ python-multipart>=0.0.9   # file uploads on /ingest
 SQLAlchemy>=2.0
 psycopg[binary]>=3.1      # Postgres driver; SQLite needs nothing extra
 
+# Shared cache / rate-limit state (CACHE_BACKEND=redis)
+redis>=5.0
+
 # Auth
 PyJWT>=2.8
 

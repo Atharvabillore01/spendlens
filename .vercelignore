@@ -1,0 +1,29 @@
+# The Vercel CLI uploads the working directory. Same hazard as the Koyeb
+# archive: .env holds live API keys and a database password, and no build-time
+# ignore file protects it -- this is the only thing that does.
+.env
+.envkey
+
+.venv/
+node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# Local artefacts, none of which the function needs.
+output/
+data/
+.uploads/
+audit.log
+*.log
+
+# Not code. The function bundle is measured against a 250MB ceiling, so
+# everything that ships has to earn its place.
+tests/
+*.md
+*.pdf
+docker-compose.yml
+Dockerfile
+deploy/
