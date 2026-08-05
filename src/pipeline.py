@@ -48,6 +48,7 @@ FLAG_LLM_UNAVAILABLE = "llm_unavailable"
 FLAG_USER_NOT_FOUND = "user_not_found"
 FLAG_NO_DATA = "no_data_for_query"
 FLAG_TOOL_RETRY = "tool_call_retried"
+FLAG_TRUNCATED_DATA = "data_truncated"
 
 
 def money(value: float) -> str:
@@ -233,6 +234,10 @@ class TransactionRAGPipeline:
         trace.cache(cache_hit, len(history))
 
         facts = self._fact_pack(user_id)
+        if facts.get("truncated"):
+            # Surfaced, not swallowed: the caller is about to be told a total
+            # derived from a partial read of their history.
+            flags.append(FLAG_TRUNCATED_DATA)
         if facts["transaction_count"] == 0:
             return self._finalize(
                 user_id=user_id,
@@ -316,6 +321,14 @@ class TransactionRAGPipeline:
         response_text = checked.response
         if guard.notice and guard.notice not in response_text:
             response_text = f"{guard.notice} {response_text}"
+        if facts.get("truncated"):
+            cap = facts.get("row_cap")
+            response_text = (
+                f"[Note: this account has more transactions than one answer can cover, so these "
+                f"figures are based on the most recent {cap:,} of them.] {response_text}"
+                if cap
+                else f"[Note: these figures are based on a partial read of this account.] {response_text}"
+            )
 
         trace.output(checked.flags, stripped=len(getattr(checked, "stripped", []) or []))
         trace.answer(response_text)
@@ -525,6 +538,11 @@ class TransactionRAGPipeline:
             "transaction_count": int(len(frame)),
             "totals": self.store.totals(frame),
             "monthly": self.store.monthly_totals(frame),
+            # Set by a storage backend that hit its row cap. Every total below
+            # is then computed from a partial history, and saying so is the
+            # difference between a caveated answer and a confident wrong one.
+            "truncated": bool(frame.attrs.get("truncated")),
+            "row_cap": frame.attrs.get("row_cap"),
         }
 
     def _relevant_period(self, prompt: str) -> Period:

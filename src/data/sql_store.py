@@ -285,6 +285,13 @@ class SqlUserDataStore(FrameAggregates):
                 "user %s hit the %s-row cap; frame truncated", user_id, f"{self.max_rows:,}"
             )
             frame = frame.iloc[: self.max_rows]
+            # A log line is the wrong channel for this. Every total computed
+            # from a truncated frame is *wrong*, and would otherwise be narrated
+            # with the same confidence as a correct one -- the exact failure this
+            # pipeline exists to prevent, arriving through the data layer rather
+            # than the model. Carried on the frame so the turn can say so.
+            frame.attrs["truncated"] = True
+            frame.attrs["row_cap"] = self.max_rows
 
         return self._coerce(frame, user_id)
 
