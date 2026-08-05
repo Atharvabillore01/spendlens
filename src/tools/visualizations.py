@@ -200,10 +200,23 @@ class VisualizationTools:
         fig.patch.set_facecolor(pal["surface"])
         return fig, ax
 
-    def _empty(self, tool: str, period: Period, extra: str = "") -> ChartResult:
+    def _empty(
+        self, tool: str, period: Period, extra: str = "", user_id: Optional[str] = None
+    ) -> ChartResult:
+        """An empty window, explained and redirected.
+
+        "No transactions found" is true and useless on its own: it leaves
+        someone guessing which window *would* work, and the usual next guess is
+        another empty one. Naming the range the data actually covers turns a
+        dead end into the next question, which is what the brief asks an empty
+        result to do.
+        """
         reason = f"No transactions found for {month_name(period)}."
         if extra:
             reason += f" {extra}"
+        suggestion = self._coverage_hint(user_id)
+        if suggestion:
+            reason += f" {suggestion}"
         return ChartResult(
             tool=tool,
             path=None,
@@ -211,6 +224,23 @@ class VisualizationTools:
             empty=True,
             reason=reason,
         )
+
+    def _coverage_hint(self, user_id: Optional[str]) -> str:
+        """"Your data runs March–December 2025; try November 2025." """
+        if not user_id:
+            return ""
+        try:
+            first, last = self.store.date_range(user_id)
+        except Exception:  # noqa: BLE001 -- a hint is never worth failing a turn for
+            return ""
+        if first is None or last is None:
+            return ""
+        span = (
+            f"{first:%B %Y}"
+            if (first.year, first.month) == (last.year, last.month)
+            else f"{first:%B %Y} to {last:%B %Y}"
+        )
+        return f"This account has transactions from {span} — try {last:%B %Y}."
 
     # -- 1. monthly spending trend -------------------------------------------
 
@@ -231,7 +261,7 @@ class VisualizationTools:
         )
         if frame.empty:
             hint = f"No {category_filter} spending in this window." if category_filter else ""
-            return self._empty("plot_monthly_spending_trend", period, hint)
+            return self._empty("plot_monthly_spending_trend", period, hint, user_id=user_id)
 
         monthly = self.store.monthly_totals(frame)
         values = monthly["expense"].tolist()
@@ -322,7 +352,7 @@ class VisualizationTools:
         )
         if frame.empty:
             hint = f"No {parent_category} spending in this window." if parent_category else ""
-            return self._empty("plot_category_breakdown", resolved, hint)
+            return self._empty("plot_category_breakdown", resolved, hint, user_id=user_id)
 
         group_column = "subcategory" if parent_category else "parent_category"
         # Clamped here as well as in the schema: the dispatcher repairs
@@ -333,7 +363,7 @@ class VisualizationTools:
             frame, top_n=top_n, value_column="expense_amount", group_column=group_column
         )
         if rolled.empty:
-            return self._empty("plot_category_breakdown", resolved)
+            return self._empty("plot_category_breakdown", resolved, user_id=user_id)
 
         total = float(rolled["amount"].sum())
         labels = rolled["category"].tolist()
@@ -408,7 +438,7 @@ class VisualizationTools:
         period = resolve_period(None, self.store.as_of, months=months)
         frame = self.store.get_user_frame(user_id, period=period)
         if frame.empty:
-            return self._empty("plot_income_vs_expense", period)
+            return self._empty("plot_income_vs_expense", period, user_id=user_id)
 
         monthly = self.store.monthly_totals(frame)
         labels = monthly["month"].tolist()
@@ -499,7 +529,7 @@ class VisualizationTools:
         )
         if frame.empty:
             hint = f"No {parent_category} spending in this window." if parent_category else ""
-            return self._empty("plot_top_merchants", resolved, hint)
+            return self._empty("plot_top_merchants", resolved, hint, user_id=user_id)
 
         grouped = (
             frame.groupby("merchant_name", observed=True)
@@ -508,7 +538,7 @@ class VisualizationTools:
         )
         grouped = grouped[grouped["amount"] > 0]
         if grouped.empty:
-            return self._empty("plot_top_merchants", resolved)
+            return self._empty("plot_top_merchants", resolved, user_id=user_id)
 
         total = float(frame["expense_amount"].sum())
         shown = grouped.head(max(1, int(top_n)))
@@ -597,7 +627,7 @@ class VisualizationTools:
         now_frame = self.store.get_user_frame(user_id, period=current, include_income=False)
         was_frame = self.store.get_user_frame(user_id, period=baseline, include_income=False)
         if now_frame.empty and was_frame.empty:
-            return self._empty("plot_period_comparison", current)
+            return self._empty("plot_period_comparison", current, user_id=user_id)
 
         def totals(frame):
             if frame.empty:

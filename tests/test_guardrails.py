@@ -662,3 +662,23 @@ def test_an_ordinary_caller_gets_no_membership_oracle(manager_guard):
     assert not invented.allowed and not real.allowed
     assert invented.flags == real.flags
     assert invented.refusal == real.refusal
+
+
+def test_an_empty_window_names_one_that_would_work():
+    """§6: an empty result must explain *and* suggest an alternative.
+
+    "No transactions found" alone leaves the next guess as blind as the first.
+    """
+    from src.llm.scripted import ScriptedLLMClient
+    from src.pipeline import TransactionRAGPipeline, load_transactions
+
+    client = ScriptedLLMClient(script=[
+        ScriptedLLMClient.tool_call("plot_category_breakdown", {"period": "2019-01"}),
+        ScriptedLLMClient.text("(narration)"),
+    ])
+    pipe = TransactionRAGPipeline(df=load_transactions(), llm_client=client)
+    result = pipe.run(user_id=pipe.store.user_ids[0], prompt="spending in January 2019?")
+
+    assert "no_data_for_query" in result["guardrail_flags"]
+    assert "January 2019" in result["response"]
+    assert "try" in result["response"].lower()
